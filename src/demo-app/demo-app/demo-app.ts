@@ -34,6 +34,7 @@ export class DemoApp {
   dark = false;
   changeDetectionStrategy: string;
   navItems = [
+    {name: 'Connected Overlay', route: 'connected-overlay'},
     {name: 'Autocomplete', route: 'autocomplete'},
     {name: 'Button', route: 'button'},
     {name: 'Button Toggle', route: 'button-toggle'},
@@ -67,7 +68,7 @@ export class DemoApp {
     {name: 'Tooltip', route: 'tooltip'},
     {name: 'Platform', route: 'platform'},
     {name: 'Style', route: 'style'},
-    {name: 'Typography', route: 'typography'}
+    {name: 'Typography', route: 'typography'},
   ];
 
   constructor(private _element: ElementRef) {

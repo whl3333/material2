@@ -11,6 +11,7 @@ import {ConnectedPositionStrategy} from './connected-position-strategy';
 import {ElementRef, Injectable} from '@angular/core';
 import {GlobalPositionStrategy} from './global-position-strategy';
 import {OverlayConnectionPosition, OriginConnectionPosition} from './connected-position';
+import {BetterConnectedPositionStrategy} from './better-connected-position-strategy';
 
 
 
@@ -38,4 +39,19 @@ export class OverlayPositionBuilder {
       overlayPos: OverlayConnectionPosition): ConnectedPositionStrategy {
     return new ConnectedPositionStrategy(elementRef, originPos, overlayPos, this._viewportRuler);
   }
+
+  /**
+   * Creates a relative position strategy.
+   * @param elementRef
+   * @param originPos
+   * @param overlayPos
+   */
+  betterConnectedTo(
+      elementRef: ElementRef,
+      originPos: OriginConnectionPosition,
+      overlayPos: OverlayConnectionPosition): BetterConnectedPositionStrategy {
+    return new BetterConnectedPositionStrategy(
+        elementRef, originPos, overlayPos, this._viewportRuler);
+  }
+
 }

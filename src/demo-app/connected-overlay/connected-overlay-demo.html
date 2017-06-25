@@ -1,0 +1,55 @@
+<div style="height: 500px"></div>
+
+<div class="demo-options">
+  <div>
+    <h3>Origin X</h3>
+    <md-radio-group [(ngModel)]="originX">
+      <md-radio-button value="start">start</md-radio-button>
+      <md-radio-button value="center">center</md-radio-button>
+      <md-radio-button value="end">end</md-radio-button>
+    </md-radio-group>
+  </div>
+
+  <div>
+    <h3>Origin Y</h3>
+    <md-radio-group [(ngModel)]="originY">
+      <md-radio-button value="top">top</md-radio-button>
+      <md-radio-button value="center">center</md-radio-button>
+      <md-radio-button value="bottom">bottom</md-radio-button>
+    </md-radio-group>
+  </div>
+
+  <div>
+    <h3>Overlay X</h3>
+    <md-radio-group [(ngModel)]="overlayX">
+      <md-radio-button value="start">start</md-radio-button>
+      <md-radio-button value="center">center</md-radio-button>
+      <md-radio-button value="end">end</md-radio-button>
+    </md-radio-group>
+  </div>
+
+  <div>
+    <h3>Overlay Y</h3>
+    <md-radio-group [(ngModel)]="overlayY">
+      <md-radio-button value="top">top</md-radio-button>
+      <md-radio-button value="center">center</md-radio-button>
+      <md-radio-button value="bottom">bottom</md-radio-button>
+    </md-radio-group>
+  </div>
+
+  <div>
+    <button md-raised-button type="button" (click)="close()" [disabled]="!overlayRef">Close</button>
+  </div>
+</div>
+
+
+<div class="demo-trigger">
+  <div style="width: 50px;"></div>
+  <button md-raised-button
+      cdkOverlayOrigin
+      type="button"
+      [disabled]="overlayRef"
+      (click)="openWithConfig()">Open</button>
+</div>
+
+<div style="height: 500px"></div>
