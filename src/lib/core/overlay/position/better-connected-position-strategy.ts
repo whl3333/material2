@@ -19,6 +19,31 @@ import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
 import {Scrollable} from '../scroll/scrollable';
 import {extendObject} from '../../util/object-extend';
+import {OverlayRef} from '../overlay-ref';
+
+
+// TODO: change position selection to take available size into account (is min-height enough?).
+//       Right now it will pretty much always take the first size and shrink it with no limit.
+//       We don't want to actually do a layout for every position, though.
+// TODO: update css classes for flex container and overlay panel
+// TODO: push origin point on-screen when no positions would be on-screen.
+//       This plays into the logic for picking a position, so probably deals with min-height again.
+// TODO: able to turn off flexible size
+// TODO: add setting for *when* to pick a new position
+//       (in attempt to remove `recalculateLastPosition`)
+// TODO: use cached ClientRects when possible
+// TODO: add api for viewport margin
+// TODO: move clipping detection to scroll strategy
+// TODO: add offsets and origin element to a per-position setting
+// TODO: attribute selector to specify the transform-origin inside the overlay content
+// TODO: Use Directionality
+// TODO: create `DropdownPositionStrategy` and `TooltipPositionStrategy`, which are pre-configured
+//       connected position strategies
+// TODO: explore easier position setting (e.g., saying "bottom-center")
+// TODO: unit tests
+// TODO: change existing components to new strategy
+
+
 
 /**
  * Container to hold the bounding positions of a particular element with respect to the viewport,
@@ -40,7 +65,8 @@ type ElementBoundingPositions = {
  * of the overlay.
  */
 export class BetterConnectedPositionStrategy implements PositionStrategy {
-  private _dir = 'ltr';
+  /** The overlay to which this strategy is attached. */
+  private _overlayRef: OverlayRef;
 
   /** The offset in pixels for the overlay connection point on the x-axis */
   private _offsetX: number = 0;
@@ -60,14 +86,6 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   private _hasFlexibleHeight = true;
 
   private _hasFlexibleWidth = true;
-
-  private _minWidth = 0;
-
-  private _minHeight = 0;
-
-  private _maxHeight = 0;
-
-  private _maxWidth = 0;
 
   private _originRect: ClientRect;
 
@@ -94,7 +112,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    * Parent element for the overlay panel with `display: flex`. Used to take advantage of
    * `flex-shrink` to constrain the overlay panel's size to fit inside the viewport.
    */
-  private _flexWrapper: HTMLDivElement = this._createFlexWrapper();
+  private _flexWrapper: HTMLDivElement;
 
   /** The last position to have been calculated as the best fit position. */
   private _lastConnectedPosition: ConnectionPositionPair;
@@ -108,7 +126,10 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   }
 
   /** Whether the we're dealing with an RTL context */
-  get _isRtl() { return this._dir === 'rtl'; }
+  private _isRtl() {
+    return this._overlayRef.getState().direction === 'rtl';
+  }
+
 
   /** Ordered list of preferred positions, from most to least desirable. */
   get positions() { return this._preferredPositions; }
@@ -120,6 +141,10 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       private _viewportRuler: ViewportRuler) {
     this._origin = this._connectedTo.nativeElement;
     this.withFallbackPosition(_originPos, _overlayPos);
+  }
+
+  attach(overlayRef: OverlayRef): void {
+    this._overlayRef = overlayRef;
   }
 
   /** Cleanup after the element gets destroyed. */
@@ -143,6 +168,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
     if (this._isInitialRender) {
       // If we haven't attached the element to its flex-wrapper yet, do so now.
+      this._flexWrapper = this._createFlexWrapper();
       if (element.parentNode && element.parentNode !== this._flexWrapper) {
         element.parentNode.insertBefore(this._flexWrapper, element);
         this._flexWrapper.appendChild(element);
@@ -160,6 +186,8 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       element.style.position = 'static';
       element.style.maxHeight = '100%';
 
+      // needed for content max-height: 100% to work.
+      element.style.display = 'flex';
     }
 
     const originRect = this._originRect;
@@ -190,14 +218,14 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
       // If the overlay, without any further work, fits into the viewport, use this position.
       if (overlayFit.isCompletelyWithinViewport) {
-        this._applyPosition(element, pos, overlayPoint,originPoint, overlayRect, viewportRect);
+        this._applyPosition(element, pos, originPoint, viewportRect);
         return;
       }
 
       // If the overlay has flexible dimensions, we can use this position so long as there's enough
       // space for the minimum dimensions.
       if (this._canFitWithFlexibleDimensions(overlayFit, overlayPoint, viewportRect)) {
-        this._applyPosition(element, pos, overlayPoint,originPoint, overlayRect, viewportRect);
+        this._applyPosition(element, pos, originPoint, viewportRect);
         return;
       }
 
@@ -212,16 +240,18 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     // When none of the preferred positions exactly fit within the viewport, take the position
     // that went off-screen the least and attempt to push it on-screen.
     if (this._canPush) {
+      // TODO: make this work
+      // note to future jeremy: pushing the overlay is equivalent to moving the ORIGIN point
       const pushedPoint =
           this._pushOverlayOnScreen(fallback!.overlayPoint, overlayRect, viewportRect);
-      this._applyPosition(element, fallback!.pos, pushedPoint, fallback!.originPoint, overlayRect, viewportRect);
+      this._applyPosition(element, fallback!.pos, fallback!.originPoint, viewportRect);
       return;
     }
 
     // All options for getting the overlay within the viewport have been exhausted, so go with the
     // position that went off-screen the least.
     this._applyPosition(
-        element, fallback!.pos, fallback!.overlayPoint, fallback!.originPoint, overlayRect, viewportRect);
+        element, fallback!.pos, fallback!.originPoint, viewportRect);
   }
 
   /**
@@ -262,15 +292,6 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   }
 
   /**
-   * Sets the layout direction so the overlay's position can be adjusted to match.
-   * @param dir New layout direction.
-   */
-  withDirection(dir: 'ltr' | 'rtl'): this {
-    this._dir = dir;
-    return this;
-  }
-
-  /**
    * Sets an offset for the overlay's connection point on the x-axis
    * @param offset New offset in the X axis.
    */
@@ -293,7 +314,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    * @param rect
    */
   private _getStartX(rect: ClientRect): number {
-    return this._isRtl ? rect.right : rect.left;
+    return this._isRtl() ? rect.right : rect.left;
   }
 
   /**
@@ -301,7 +322,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    * @param rect
    */
   private _getEndX(rect: ClientRect): number {
-    return this._isRtl ? rect.left : rect.right;
+    return this._isRtl() ? rect.left : rect.right;
   }
 
 
@@ -347,9 +368,9 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     if (pos.overlayX == 'center') {
       overlayStartX = -overlayRect.width / 2;
     } else if (pos.overlayX === 'start') {
-      overlayStartX = this._isRtl ? -overlayRect.width : 0;
+      overlayStartX = this._isRtl() ? -overlayRect.width : 0;
     } else {
-      overlayStartX = this._isRtl ? 0 : -overlayRect.width;
+      overlayStartX = this._isRtl() ? 0 : -overlayRect.width;
     }
 
     let overlayStartY: number;
@@ -393,11 +414,13 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     if (this._hasFlexibleWidth || this._hasFlexibleWidth) {
       const availableHeight = viewport.bottom - point.y;
       const availableWidth = viewport.right - point.x;
+      const minHeight = this._overlayRef.getState().minHeight || 0;
+      const minWidth = this._overlayRef.getState().minWidth || 0;
 
       const verticalFit = fit.fitsInViewportVertically ||
-          (this._hasFlexibleHeight && this._minHeight <= availableHeight);
+          (this._hasFlexibleHeight && minHeight <= availableHeight);
       const horizontalFit = fit.fitsInViewportHorizontally ||
-          (this._hasFlexibleWidth && this._minWidth <= availableWidth);
+          (this._hasFlexibleWidth && minWidth <= availableWidth);
 
       return verticalFit && horizontalFit;
     }
@@ -438,25 +461,18 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    *
    * @param element The overlay element
    * @param position The position preference
-   * @param overlayPoint The exact point at which to place the overlay's top-left corner.
    * @param originPoint xx
    * @param viewport xx
    */
   private _applyPosition(
       element: HTMLElement,
       position: ConnectionPositionPair,
-      overlayPoint: Point,
       originPoint: Point,
-      overlayRect: ClientRect,
       viewport: ClientRect) {
-    // this._setElementPositionStyles(element, overlayRect, point, position);
-    this._setFlexWrapperStyles(overlayPoint, originPoint, position, overlayRect, viewport);
+    this._setFlexWrapperStyles(originPoint, position, viewport);
 
     // Save the last connected position in case the position needs to be re-calculated.
     this._lastConnectedPosition = position;
-
-    // needed for max-height on content to work
-    element.style.display = 'flex';
 
     // Notify that the position has been changed along with its change properties.
     const scrollableViewProperties = this.getScrollableViewProperties(element);
@@ -465,13 +481,9 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   }
 
   private _setFlexWrapperStyles(
-      _overlayPoint: Point,
       originPoint: Point,
       position: ConnectionPositionPair,
-      overlay: ClientRect,
       viewport: ClientRect): void {
-    this._flexWrapper.dir = this._dir;
-    console.log(overlay);
     let style = {} as CSSStyleDeclaration;
 
     let flexContainerHeight, flexContainerTop;
@@ -496,24 +508,19 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     style.height = `${flexContainerHeight}px`;
     style.top = `${flexContainerTop}px`;
 
-    // todo: do this with a class so we can remove it at the begining of calculations.
-    // if (overlay.height >= flexContainerHeight) {
-    //   this._pane.style.height = '100%';
-    // }
-
     if (position.overlayX === 'end') {
       style.justifyContent = 'flex-end';
     }
 
     // I.e., overlay is opening "right-ward"
     const isBoundedByRightViewportEdge =
-        (position.overlayX === 'start' && !this._isRtl) ||
-        (position.overlayX === 'end' && this._isRtl);
+        (position.overlayX === 'start' && !this._isRtl()) ||
+        (position.overlayX === 'end' && this._isRtl());
 
     // I.e., overlay is opening "left-ward"
     const isBoundedByLeftViewportEdge =
-        (position.overlayX === 'end' && !this._isRtl) ||
-        (position.overlayX === 'start' && this._isRtl);
+        (position.overlayX === 'end' && !this._isRtl()) ||
+        (position.overlayX === 'start' && this._isRtl());
 
     let flexContainerWidth, flexContainerLeft;
 
@@ -534,54 +541,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     style.width = `${flexContainerWidth}px`;
     style.left = `${flexContainerLeft}px`;
 
-    // todo: do this with a class so we can remove it at the begining of calculations.
-    // if (overlay.width >= flexContainerWidth) {
-    //   this._pane.style.width = '100%';
-    // }
-
     extendObject(this._flexWrapper.style, style);
-  }
-
-  private _setElementPositionStyles(
-      element: HTMLElement,
-      overlayRect: ClientRect,
-      overlayPoint: Point,
-      pos: ConnectionPositionPair) {
-
-    // We want to set either `top` or `bottom` based on whether the overlay wants to appear above
-    // or below the origin and the direction in which the element will expand.
-    let verticalStyleProperty = pos.overlayY === 'bottom' ? 'bottom' : 'top';
-
-    // When using `bottom`, we adjust the y position such that it is the distance
-    // from the bottom of the viewport rather than the top.
-    let y = verticalStyleProperty === 'top' ?
-        overlayPoint.y :
-        document.documentElement.clientHeight - (overlayPoint.y + overlayRect.height);
-
-    // We want to set either `left` or `right` based on whether the overlay wants to appear "before"
-    // or "after" the origin, which determines the direction in which the element will expand.
-    // For the horizontal axis, the meaning of "before" and "after" change based on whether the
-    // page is in RTL or LTR.
-    let horizontalStyleProperty: string;
-    if (this._dir === 'rtl') {
-      horizontalStyleProperty = pos.overlayX === 'end' ? 'left' : 'right';
-    } else {
-      horizontalStyleProperty = pos.overlayX === 'end' ? 'right' : 'left';
-    }
-
-    // When we're setting `right`, we adjust the x position such that it is the distance
-    // from the right edge of the viewport rather than the left edge.
-    let x = horizontalStyleProperty === 'left' ?
-        overlayPoint.x :
-        document.documentElement.clientWidth - (overlayPoint.x + overlayRect.width);
-
-
-    // Reset any existing styles. This is necessary in case the preferred position has
-    // changed since the last `apply`.
-    ['top', 'bottom', 'left', 'right'].forEach(p => element.style[p] = null);
-
-    element.style[verticalStyleProperty] = `${y}px`;
-    element.style[horizontalStyleProperty] = `${x}px`;
   }
 
   /**
@@ -653,7 +613,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     // For the horizontal axis, the meaning of "before" and "after" change based on whether the
     // page is in RTL or LTR.
     let horizontalStyleProperty: string;
-    if (this._dir === 'rtl') {
+    if (this._isRtl()) {
       horizontalStyleProperty = pos.overlayX === 'end' ? 'left' : 'right';
     } else {
       horizontalStyleProperty = pos.overlayX === 'end' ? 'right' : 'left';
@@ -694,15 +654,6 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     }, length);
   }
 
-  private _createFlexWrapper(): HTMLDivElement {
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('debug-wrapper');
-    wrapper.style.position = 'absolute';
-    wrapper.style.zIndex = '1000';
-    wrapper.style.display = 'flex';
-    return wrapper;
-  }
-
   /** Narrows the given viewport rect by the current _viewportMargin. */
   private _narrowViewportRectWith(rect: ClientRect): ClientRect {
     return {
@@ -714,6 +665,21 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       height: rect.height - (2 * this._viewportMargin),
     };
   }
+
+  /**
+   * Creates a `display: flex` wrapper element for the overlay. This element is used to constrain
+   * the size of the overlay panel with `flex-skrink`.
+   */
+  _createFlexWrapper(): HTMLDivElement {
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('debug-wrapper');
+    wrapper.dir = this._overlayRef.getState().direction || 'ltr';
+    // todo: use a css class for this
+    wrapper.style.position = 'absolute';
+    wrapper.style.zIndex = '1000';
+    wrapper.style.display = 'flex';
+    return wrapper;
+  }
 }
 
 /** A simple (x, y) coordinate. */
@@ -724,11 +690,13 @@ interface Point {
 
 /** How well an overlay (at a given position) fits into the viewport. */
 interface OverlayFit {
-  /** Whether the overlay fits in the viewport. */
+  /** Whether the overlay fits completely in the viewport. */
   isCompletelyWithinViewport: boolean;
 
+  /** Whether the overlay fits in the viewport on the y-axis. */
   fitsInViewportVertically: boolean;
 
+  /** Whether the overlay fits in the viewport on the x-axis. */
   fitsInViewportHorizontally: boolean;
 
   /** The total visible area (in px^2) of the overlay inside the viewport. */

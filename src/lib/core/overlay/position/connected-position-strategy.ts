@@ -18,6 +18,7 @@ import {
 import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
 import {Scrollable} from '../scroll/scrollable';
+import {OverlayRef} from '../overlay-ref';
 
 /**
  * Container to hold the bounding positions of a particular element with respect to the viewport,
@@ -39,6 +40,9 @@ type ElementBoundingPositions = {
  * of the overlay.
  */
 export class ConnectedPositionStrategy implements PositionStrategy {
+  /** The overlay to which this strategy is attached. */
+  private _overlayRef: OverlayRef;
+
   private _dir = 'ltr';
 
   /** The offset in pixels for the overlay connection point on the x-axis */
@@ -82,6 +86,10 @@ export class ConnectedPositionStrategy implements PositionStrategy {
       private _viewportRuler: ViewportRuler) {
     this._origin = this._connectedTo.nativeElement;
     this.withFallbackPosition(_originPos, _overlayPos);
+  }
+
+  attach(overlayRef: OverlayRef): void {
+    this._overlayRef = overlayRef;
   }
 
   /** Ordered list of preferred positions, from most to least desirable. */

@@ -38,8 +38,7 @@ export class ConnectedOverlayDemo {
         .betterConnectedTo(
             this._overlayOrigin.elementRef,
             {originX: this.originX, originY: this.originY},
-            {overlayX: this.overlayX, overlayY: this.overlayY})
-        .withDirection(this.dir.value);
+            {overlayX: this.overlayX, overlayY: this.overlayY});
 
     let config = new OverlayState();
     config.positionStrategy = strategy;
