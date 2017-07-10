@@ -38,6 +38,13 @@
   </div>
 
   <div>
+    <label>
+      Number of items in the overlay
+      <input #count type="number" value="5" (input)="updateCount(count.value)">
+    </label>
+  </div>
+
+  <div>
     <button md-raised-button type="button" (click)="close()" [disabled]="!overlayRef">Close</button>
   </div>
 </div>

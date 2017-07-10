@@ -11,6 +11,8 @@ import {
 } from '@angular/material';
 
 
+let itemCount = 5;
+
 @Component({
   moduleId: module.id,
   selector: 'overlay-demo',
@@ -55,6 +57,9 @@ export class ConnectedOverlayDemo {
     }
   }
 
+  updateCount(value: number) {
+    itemCount = +value;
+  }
 }
 
 
@@ -64,6 +69,6 @@ export class ConnectedOverlayDemo {
   encapsulation: ViewEncapsulation.None,
 })
 export class DemoOverlay {
-  items = Array(100);
+  items = Array(itemCount);
 }
 
