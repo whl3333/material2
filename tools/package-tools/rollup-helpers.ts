@@ -34,7 +34,7 @@ const ROLLUP_GLOBALS = {
   '@angular/cdk/rxjs': 'ng.cdk.rxjs',
   '@angular/cdk/table': 'ng.cdk.table',
   '@angular/cdk': 'ng.cdk',
-  
+
   '@angular/cdk/a11y/index': 'ng.cdk.a11y',
   '@angular/cdk/bidi/index': 'ng.cdk.bidi',
   '@angular/cdk/coercion/index': 'ng.cdk.coercion',

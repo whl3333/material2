@@ -38,10 +38,10 @@ export function composeRelease(packageName: string, options: ReleaseBuildOptions
 
   updatePackageVersion(releasePath);
   createTypingsReexportFile(releasePath, './typings/index', packageName);
-  createMetadataReexportFile(releasePath, packageName, './typings/index');
+  createMetadataReexportFile(releasePath, './typings/index', packageName);
 
   if (options.useSecondaryEntryPoints) {
-    createFilesForSecondaryEntryPoint(packageName, releasePath);
+    createFilesForSecondaryEntryPoint(packageName, packagePath, releasePath);
   }
 
   addPureAnnotationsToFile(join(releasePath, '@angular', `${packageName}.es5.js`));
@@ -50,9 +50,10 @@ export function composeRelease(packageName: string, options: ReleaseBuildOptions
 /**
  * Creates files necessary for a secondary entry-point.
  * @param packageName The name of the package for which to create entry-point files.
+ * @param packagePath
  * @param releasePath The path to the release package.
  */
-function createFilesForSecondaryEntryPoint(packageName: string, releasePath: string) {
+function createFilesForSecondaryEntryPoint(packageName: string, packagePath: string, releasePath: string) {
   getSecondaryEntryPointsForPackage(packageName).forEach(entryPointName => {
     // Create a directory in the root of the package for this entry point that contains
     // * A package.json that lists the different bundle locations
@@ -61,12 +62,18 @@ function createFilesForSecondaryEntryPoint(packageName: string, releasePath: str
     const entryPointDir = join(releasePath, entryPointName);
     mkdirpSync(entryPointDir);
     createEntryPointPackageJson(entryPointDir, packageName, entryPointName);
-    createMetadataReexportFile(entryPointDir, packageName, `../typings/${entryPointName}/index`);
-    createTypingsReexportFile(entryPointDir, `../typings/${entryPointName}/index`, 'index');
 
-    // Finally, create a d.ts file for this entry-point in the root of the package that
-    // re-exports from the entry-point's directory.
-    createTypingsReexportFile(releasePath, `./${entryPointName}/index`, `${entryPointName}`);
+    // Copy typings and metadata from tsc output location into the entry-point.
+    copyFiles(packagePath, '**/*.+(d.ts|metadata.json)', join(entryPointDir, 'typings'));
+
+    // Create a typings and a metadata re-export inside the entry-point
+    createTypingsReexportFile(entryPointDir, `./typings/${entryPointName}/index`, 'index');
+    createMetadataReexportFile(entryPointDir, `./typings/${entryPointName}/index`, 'index');
+
+    // Finally, create both a d.ts and metadata file for this entry-point in the root of
+    // the package that re-exports from the entry-point's directory.
+    createTypingsReexportFile(releasePath, `./${entryPointName}/index`, entryPointName);
+    createMetadataReexportFile(releasePath, `./${entryPointName}/index`, entryPointName);
   });
 }
 
@@ -74,7 +81,7 @@ function createFilesForSecondaryEntryPoint(packageName: string, releasePath: str
 function createEntryPointPackageJson(destDir: string, packageName: string, entryPointName: string) {
   const content = {
     name: `@angular/${packageName}/${entryPointName}`,
-    typings: `../typings/${entryPointName}/index.d.ts`,
+    typings: `../${entryPointName}.d.ts`,
     main: `../bundles/${packageName}-${entryPointName}.umd.js`,
     module: `../@angular/${packageName}/${entryPointName}.es5.js`,
     es2015: `../@angular/${packageName}/${entryPointName}.js`,
