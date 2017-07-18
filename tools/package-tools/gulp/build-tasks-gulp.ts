@@ -145,7 +145,6 @@ interface PackageTaskOptions {
 /** */
 async function compileSecondaryEntryPointsEsm(packageName: string, packageRoot: string) {
   for (const p of getSecondaryEntryPointsForPackage(packageName)) {
-    console.log('basePath: ', join(packageRoot, p));
     await tsc(join(packageRoot, p, 'tsconfig-build.json'), {basePath: join(packageRoot, p)});
   }
 }

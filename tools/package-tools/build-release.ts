@@ -64,11 +64,15 @@ function createFilesForSecondaryEntryPoint(packageName: string, packagePath: str
     createEntryPointPackageJson(entryPointDir, packageName, entryPointName);
 
     // Copy typings and metadata from tsc output location into the entry-point.
-    copyFiles(packagePath, '**/*.+(d.ts|metadata.json)', join(entryPointDir, 'typings'));
+    copyFiles(
+        join(packagePath, entryPointName),
+        '**/*.+(d.ts|metadata.json)',
+        join(entryPointDir, 'typings'));
 
-    // Create a typings and a metadata re-export inside the entry-point
-    createTypingsReexportFile(entryPointDir, `./typings/${entryPointName}/index`, 'index');
-    createMetadataReexportFile(entryPointDir, `./typings/${entryPointName}/index`, 'index');
+    // Create a typings and a metadata re-export within the entry-point to point to the
+    // typings we just copied.
+    createTypingsReexportFile(entryPointDir, `./typings/index`, 'index');
+    createMetadataReexportFile(entryPointDir, `./typings/index`, 'index');
 
     // Finally, create both a d.ts and metadata file for this entry-point in the root of
     // the package that re-exports from the entry-point's directory.

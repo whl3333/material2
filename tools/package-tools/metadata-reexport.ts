@@ -2,7 +2,7 @@ import {writeFileSync} from 'fs';
 import {join} from 'path';
 
 /** Creates a metadata file that re-exports the metadata bundle inside of the typings. */
-export function createMetadataReexportFile(destDir: string, name: string, from: string) {
+export function createMetadataReexportFile(destDir: string, from: string, name: string) {
   const metadataReExport = `{
     "__symbolic":"module",
     "version":3,"metadata":{},
