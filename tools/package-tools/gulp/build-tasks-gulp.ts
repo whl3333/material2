@@ -10,6 +10,7 @@ import {buildScssTask} from './build-scss-task';
 import {sequenceTask} from './sequence-task';
 import {triggerLivereload} from './trigger-livereload';
 import {getSecondaryEntryPointsForPackage} from '../secondary-entry-points';
+import {copyFiles} from '../copy-files';
 
 // There are no type definitions available for these imports.
 const htmlmin = require('gulp-htmlmin');
