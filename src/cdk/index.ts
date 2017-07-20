@@ -12,6 +12,5 @@
  * SystemJS configuration
  */
 
-export const VERSION = 1;
-
-//export * from './public_api';
+// TODO(jelbourn): add version here.
+export const __TMP__ = 0;

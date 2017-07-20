@@ -10,7 +10,6 @@ import {buildScssTask} from './build-scss-task';
 import {sequenceTask} from './sequence-task';
 import {triggerLivereload} from './trigger-livereload';
 import {getSecondaryEntryPointsForPackage} from '../secondary-entry-points';
-import {copyFiles} from '../copy-files';
 
 // There are no type definitions available for these imports.
 const htmlmin = require('gulp-htmlmin');
@@ -80,10 +79,9 @@ export function createPackageBuildTasks(packageName: string, dependencies: strin
    */
 
   task(`${packageName}:build-release:clean`, sequenceTask('clean', `${packageName}:build-release`));
-  task(`${packageName}:build-release`, [`${packageName}:build`],
-      () => composeRelease(packageName, {
-        useSecondaryEntryPoints: options.useSecondaryEntryPoints
-      }));
+  task(`${packageName}:build-release`, [`${packageName}:build`], () => {
+    return composeRelease(packageName, {useSecondaryEntryPoints: options.useSecondaryEntryPoints});
+  });
 
   /**
    * TypeScript compilation tasks. Tasks are creating ESM, FESM, UMD bundles for releases.
@@ -143,7 +141,7 @@ interface PackageTaskOptions {
   useSecondaryEntryPoints?: boolean;
 }
 
-/** */
+/** Sequentially runs tsc for all secondary entry-points for a package. */
 async function compileSecondaryEntryPointsEsm(packageName: string, packageRoot: string) {
   for (const p of getSecondaryEntryPointsForPackage(packageName)) {
     await tsc(join(packageRoot, p, 'tsconfig-build.json'), {basePath: join(packageRoot, p)});
