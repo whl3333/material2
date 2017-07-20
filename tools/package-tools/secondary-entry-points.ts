@@ -2,8 +2,22 @@ import {join} from 'path';
 import {readdirSync, lstatSync} from 'fs';
 import {buildConfig} from './build-config';
 
-/** Blacklist of directories which are not considered secondary entry-points. */
-const DIR_BLACKLIST = ['testing'];
+
+/**
+ * List of cdk entry-points in the order that they must be built. This is necessary because
+ * some of the entry-points depend on each other. This is temporary until we switch to bazel.
+ */
+const CDK_ENTRY_POINTS = [
+  'coercion',
+  'rxjs',
+  'keyboard',
+  'platform',
+  'bidi',
+  'table',
+  'portal',
+  'observe-content',
+  'a11y',
+];
 
 /**
  * Gets secondary entry-points for a given package.
@@ -15,20 +29,12 @@ const DIR_BLACKLIST = ['testing'];
  * @param packageName The package name for which to get entry points, e.g., 'cdk'.
  * @returns An array of secondary entry-points names, e.g., ['a11y', 'bidi', ...]
  */
-export function getSecondaryEntryPointsForPackage(_packageName: string) {
-  return [
-    'coercion',
-    'rxjs',
-    'keyboard',
-    'platform',
-    'bidi',
-    'table',
-    'portal',
-    'observe-content',
-    'a11y',
-  ];
+export function getSecondaryEntryPointsForPackage(packageName: string) {
+  // For now, we hard-code the fact that only the CDK has secondary entry-points until we switch
+  // to bazel.
+  if (packageName === 'cdk') {
+    return CDK_ENTRY_POINTS;
+  }
 
-  // const packageDir = join(buildConfig.packagesDir, packageName);
-  // return readdirSync(packageDir)
-  //     .filter(f => lstatSync(join(packageDir, f)).isDirectory() && DIR_BLACKLIST.indexOf(f) < 0);
+  throw Error('Only the cdk supports secondary entry-points right now.');
 }
