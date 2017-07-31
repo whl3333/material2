@@ -109,10 +109,10 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   private _pane: HTMLElement;
 
   /**
-   * Parent element for the overlay panel with `display: flex`. Used to take advantage of
-   * `flex-shrink` to constrain the overlay panel's size to fit inside the viewport.
+   * Parent element for the overlay panel. Used to constrain the overlay panel's size to fit
+   * inside the viewport.
    */
-  private _flexWrapper: HTMLDivElement;
+  private _sizingWrapper: HTMLDivElement;
 
   /** The last position to have been calculated as the best fit position. */
   private _lastConnectedPosition: ConnectionPositionPair;
@@ -149,8 +149,8 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
   /** Cleanup after the element gets destroyed. */
   dispose() {
-    if (this._flexWrapper && this._flexWrapper.parentNode) {
-      this._flexWrapper.parentNode.removeChild(this._flexWrapper);
+    if (this._sizingWrapper && this._sizingWrapper.parentNode) {
+      this._sizingWrapper.parentNode.removeChild(this._sizingWrapper);
     }
   }
 
@@ -167,11 +167,11 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     this._pane = element;
 
     if (this._isInitialRender) {
-      // If we haven't attached the element to its flex-wrapper yet, do so now.
-      this._flexWrapper = this._createFlexWrapper();
-      if (element.parentNode && element.parentNode !== this._flexWrapper) {
-        element.parentNode.insertBefore(this._flexWrapper, element);
-        this._flexWrapper.appendChild(element);
+      // If we haven't attached the element to its sizing container yet, do so now.
+      this._sizingWrapper = this._createSizeConstraintWrapper();
+      if (element.parentNode && element.parentNode !== this._sizingWrapper) {
+        element.parentNode.insertBefore(this._sizingWrapper, element);
+        this._sizingWrapper.appendChild(element);
       }
 
       // We need the bounding rects for the origin and the overlay to determine how to position
@@ -182,12 +182,11 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       // We use the viewport rect to determine whether a position would go off-screen.
       this._viewportRect = this._viewportRuler.getViewportRect();
 
-      // DEBUG
-      element.style.position = 'static';
+      // DEBUG: set styles on overlay element (this should be moved to the css class)
+      element.style.position = 'absolute';
       element.style.maxHeight = '100%';
-
-      // needed for content max-height: 100% to work.
-      element.style.display = 'flex';
+      element.style.overflow = 'auto';
+      element.style.display = 'flex'; // needed for content max-height: 100% to work.
     }
 
     const originRect = this._originRect;
@@ -410,6 +409,12 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     };
   }
 
+  /**
+   * Whether the overlay can fit within the viewport when it may resize either its width or height.
+   * @param fit How well the overlay fits in the viewport at some position.
+   * @param point The (x, y) coordinates of the overlat at some position.
+   * @param viewport The geometry of the viewport.
+   */
   private _canFitWithFlexibleDimensions(fit: OverlayFit, point: Point, viewport: ClientRect) {
     if (this._hasFlexibleWidth || this._hasFlexibleWidth) {
       const availableHeight = viewport.bottom - point.y;
@@ -461,15 +466,15 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    *
    * @param element The overlay element
    * @param position The position preference
-   * @param originPoint xx
-   * @param viewport xx
+   * @param originPoint The point on the origin element where the overlay is connected.
+   * @param viewport The geometry of the viewport.
    */
   private _applyPosition(
       element: HTMLElement,
       position: ConnectionPositionPair,
       originPoint: Point,
       viewport: ClientRect) {
-    this._setFlexWrapperStyles(originPoint, position, viewport);
+    this._setSizingWrapperStyles(originPoint, position, viewport);
 
     // Save the last connected position in case the position needs to be re-calculated.
     this._lastConnectedPosition = position;
@@ -480,37 +485,46 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     this._onPositionChange.next(positionChange);
   }
 
-  private _setFlexWrapperStyles(
+  /**
+   * Sets the position and size of the overlay's sizing wrapper. The wrapper is positioned on the
+   * origin's connection point and stetches to the bounds of the viewport.
+   *
+   * @param originPoint The point on the origin element where the overlay is connected.
+   * @param position The position preference
+   * @param viewport The geometry of the viewport.
+   */
+  private _setSizingWrapperStyles(
       originPoint: Point,
       position: ConnectionPositionPair,
       viewport: ClientRect): void {
     let style = {} as CSSStyleDeclaration;
 
-    let flexContainerHeight, flexContainerTop;
+    // Align the overlay panel to the appropriate edge of the size-constraining container.
+    // todo: move this to another function
+    this._pane.style[position.overlayX === 'end' ? 'right' : 'left'] = '0';
+    this._pane.style[position.overlayY === 'bottom' ? 'bottom' : 'top'] = '0';
+
+    let sizingContainerHeight, sizingContainerTop;
 
     if (position.overlayY === 'top') {
       // Overlay is opening "downward".
-      flexContainerHeight = viewport.bottom - originPoint.y;
-      flexContainerTop = originPoint.y;
+      sizingContainerHeight = viewport.bottom - originPoint.y;
+      sizingContainerTop = originPoint.y;
     } else if (position.overlayY === 'bottom') {
       // Overlay is opening "upward"
-      flexContainerHeight = originPoint.y - viewport.top;
-      flexContainerTop = viewport.top;
+      sizingContainerHeight = originPoint.y - viewport.top;
+      sizingContainerTop = viewport.top;
     } else {
       const smallestDistanceToViewportEdge =
           Math.min(viewport.bottom - originPoint.y, originPoint.y - viewport.left);
 
-      flexContainerHeight = smallestDistanceToViewportEdge * 2;
-      flexContainerTop = originPoint.y - smallestDistanceToViewportEdge;
+      sizingContainerHeight = smallestDistanceToViewportEdge * 2;
+      sizingContainerTop = originPoint.y - smallestDistanceToViewportEdge;
       style.alignItems = 'center';
     }
 
-    style.height = `${flexContainerHeight}px`;
-    style.top = `${flexContainerTop}px`;
-
-    if (position.overlayX === 'end') {
-      style.justifyContent = 'flex-end';
-    }
+    style.height = `${sizingContainerHeight}px`;
+    style.top = `${sizingContainerTop}px`;
 
     // I.e., overlay is opening "right-ward"
     const isBoundedByRightViewportEdge =
@@ -522,26 +536,26 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
         (position.overlayX === 'end' && !this._isRtl()) ||
         (position.overlayX === 'start' && this._isRtl());
 
-    let flexContainerWidth, flexContainerLeft;
+    let sizingContainerWidth, sizingContainerLeft;
 
     if (isBoundedByLeftViewportEdge) {
-      flexContainerWidth = originPoint.x - viewport.left;
-      flexContainerLeft = viewport.left;
+      sizingContainerWidth = originPoint.x - viewport.left;
+      sizingContainerLeft = viewport.left;
     } else if (isBoundedByRightViewportEdge) {
-      flexContainerWidth = viewport.right - originPoint.x;
-      flexContainerLeft = originPoint.x;
+      sizingContainerWidth = viewport.right - originPoint.x;
+      sizingContainerLeft = originPoint.x;
     } else {
       const smallestDistanceToViewportEdge =
           Math.min(viewport.right - originPoint.x, originPoint.x - viewport.top);
-      flexContainerWidth = smallestDistanceToViewportEdge * 2;
-      flexContainerLeft = originPoint.x - smallestDistanceToViewportEdge;
+      sizingContainerWidth = smallestDistanceToViewportEdge * 2;
+      sizingContainerLeft = originPoint.x - smallestDistanceToViewportEdge;
       style.justifyContent = 'center';
     }
 
-    style.width = `${flexContainerWidth}px`;
-    style.left = `${flexContainerLeft}px`;
+    style.width = `${sizingContainerWidth}px`;
+    style.left = `${sizingContainerLeft}px`;
 
-    extendObject(this._flexWrapper.style, style);
+    extendObject(this._sizingWrapper.style, style);
   }
 
   /**
@@ -667,17 +681,16 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   }
 
   /**
-   * Creates a `display: flex` wrapper element for the overlay. This element is used to constrain
-   * the size of the overlay panel with `flex-skrink`.
+   * Creates a wrapper element for the overlay to constrain the size of the overlay panel via
+   * setting top/bottom/left/right on the wrapper.
    */
-  _createFlexWrapper(): HTMLDivElement {
+  _createSizeConstraintWrapper(): HTMLDivElement {
     const wrapper = document.createElement('div');
     wrapper.classList.add('debug-wrapper');
     wrapper.dir = this._overlayRef.getState().direction || 'ltr';
     // todo: use a css class for this
     wrapper.style.position = 'absolute';
     wrapper.style.zIndex = '1000';
-    wrapper.style.display = 'flex';
     return wrapper;
   }
 }
