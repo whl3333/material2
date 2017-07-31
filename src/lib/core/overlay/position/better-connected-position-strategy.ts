@@ -134,17 +134,13 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   /** Ordered list of preferred positions, from most to least desirable. */
   get positions() { return this._preferredPositions; }
 
-  constructor(
-      private _connectedTo: ElementRef,
-      private _originPos: OriginConnectionPosition,
-      private _overlayPos: OverlayConnectionPosition,
-      private _viewportRuler: ViewportRuler) {
+  constructor(private _connectedTo: ElementRef, private _viewportRuler: ViewportRuler) {
     this._origin = this._connectedTo.nativeElement;
-    this.withFallbackPosition(_originPos, _overlayPos);
   }
 
   attach(overlayRef: OverlayRef): void {
     this._overlayRef = overlayRef;
+    this._pane = overlayRef.overlayElement;
   }
 
   /** Cleanup after the element gets destroyed. */
@@ -158,13 +154,9 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    * Updates the position of the overlay element, using whichever preferred position relative
    * to the origin fits on-screen.
    * @docs-private
-   *
-   * @param element Element to which to apply the CSS styles.
-   * @returns Resolves when the styles have been applied.
    */
-  apply(element: HTMLElement): void {
-    // Cache the overlay pane element in case re-calculating position is necessary
-    this._pane = element;
+  apply(): void {
+    const element = this._pane;
 
     if (this._isInitialRender) {
       // If we haven't attached the element to its sizing container yet, do so now.
@@ -280,13 +272,10 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
   /**
    * Adds a new preferred fallback position.
-   * @param originPos
-   * @param overlayPos
+   * @param positions List of positions options for this overlay.
    */
-  withFallbackPosition(
-      originPos: OriginConnectionPosition,
-      overlayPos: OverlayConnectionPosition): this {
-    this._preferredPositions.push(new ConnectionPositionPair(originPos, overlayPos));
+  withPositions(positions: ConnectedPosition[]): this {
+    this._preferredPositions = positions;
     return this;
   }
 
@@ -721,4 +710,17 @@ interface FallbackPosition {
   overlayFit: OverlayFit;
   originPoint: Point;
   pos: ConnectionPositionPair;
+}
+
+
+export interface ConnectedPosition {
+  originX: 'start' | 'center' | 'end'
+  originY: 'top' | 'center' | 'bottom';
+
+  overlayX: 'start' | 'center' | 'end';
+  overlayY: 'top' | 'center' | 'bottom';
+
+  weight?: number;
+  offsetX?: number;
+  offsetY?: number;
 }

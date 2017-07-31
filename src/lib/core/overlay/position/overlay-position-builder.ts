@@ -43,15 +43,9 @@ export class OverlayPositionBuilder {
   /**
    * Creates a relative position strategy.
    * @param elementRef
-   * @param originPos
-   * @param overlayPos
    */
-  betterConnectedTo(
-      elementRef: ElementRef,
-      originPos: OriginConnectionPosition,
-      overlayPos: OverlayConnectionPosition): BetterConnectedPositionStrategy {
-    return new BetterConnectedPositionStrategy(
-        elementRef, originPos, overlayPos, this._viewportRuler);
+  betterConnectedTo(elementRef: ElementRef): BetterConnectedPositionStrategy {
+    return new BetterConnectedPositionStrategy(elementRef, this._viewportRuler);
   }
 
 }

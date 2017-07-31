@@ -69,7 +69,7 @@ export class OverlayDemo {
   openSpaghettiPanel() {
     // TODO(jelbourn): separate overlay demo for connected positioning.
     let strategy = this.overlay.position()
-        .betterConnectedTo(
+        .connectedTo(
             this._overlayOrigin.elementRef,
             {originX: 'start', originY: 'bottom'},
             {overlayX: 'start', overlayY: 'top'} );

@@ -37,10 +37,19 @@ export class ConnectedOverlayDemo {
 
   openWithConfig() {
     let strategy = this.overlay.position()
-        .betterConnectedTo(
-            this._overlayOrigin.elementRef,
-            {originX: this.originX, originY: this.originY},
-            {overlayX: this.overlayX, overlayY: this.overlayY});
+        .betterConnectedTo(this._overlayOrigin.elementRef)
+        .withPositions([{
+          originX: this.originX,
+          originY: this.originY,
+          overlayX: this.overlayX,
+          overlayY: this.overlayY,
+          weight: 2,
+        }, {
+          originX: this.originX,
+          originY: this.originY,
+          overlayX: this.overlayX,
+          overlayY: this.overlayY,
+        }]);
 
     let config = new OverlayState();
     config.positionStrategy = strategy;
