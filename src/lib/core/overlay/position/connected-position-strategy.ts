@@ -111,6 +111,9 @@ export class ConnectedPositionStrategy implements PositionStrategy {
    * @returns Resolves when the styles have been applied.
    */
   apply(element: HTMLElement): void {
+    console.log('POSITONING ELEMENT');
+    console.log('  ', element.style.cssText);
+
     // Cache the overlay pane element in case re-calculating position is necessary
     this._pane = element;
 

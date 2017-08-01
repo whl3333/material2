@@ -74,7 +74,11 @@ export class ConnectedOverlayDemo {
 
 @Component({
   selector: 'demo-overlay',
-  template: '<ul><li *ngFor="let item of items; index as i">item {{i}}</li></ul>',
+  template: `
+    <div style="overflow: auto;">
+      {{items.length}}
+      <ul><li *ngFor="let item of items; index as i">item {{i}}</li></ul>
+    </div>`,
   encapsulation: ViewEncapsulation.None,
 })
 export class DemoOverlay {

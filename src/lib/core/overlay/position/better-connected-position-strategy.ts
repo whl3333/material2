@@ -10,10 +10,9 @@ import {PositionStrategy} from './position-strategy';
 import {ElementRef} from '@angular/core';
 import {ViewportRuler} from './viewport-ruler';
 import {
+  ConnectedOverlayPositionChange,
   ConnectionPositionPair,
-  OriginConnectionPosition,
-  OverlayConnectionPosition,
-  ConnectedOverlayPositionChange, ScrollableViewProperties
+  ScrollableViewProperties
 } from './connected-position';
 import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
@@ -22,25 +21,40 @@ import {extendObject} from '../../util/object-extend';
 import {OverlayRef} from '../overlay-ref';
 
 
-// TODO: change position selection to take available size into account (is min-height enough?).
-//       Right now it will pretty much always take the first size and shrink it with no limit.
-//       We don't want to actually do a layout for every position, though.
-// TODO: update css classes for flex container and overlay panel
+// TODO: ensure that overlay content is fully rendered before positioning.
+//    This is a change to OverlayRef. Exploring defering the initial positioning until onStable.
+//    Need to confirm w/ Matias that this *reliably* happens before animations start.
+
 // TODO: push origin point on-screen when no positions would be on-screen.
 //       This plays into the logic for picking a position, so probably deals with min-height again.
+
+
 // TODO: able to turn off flexible size
 // TODO: add setting for *when* to pick a new position
-//       (in attempt to remove `recalculateLastPosition`)
+//     (in attempt to remove `recalculateLastPosition`)
+//     Times when you owuld want to reposition: content change, scroll, window resize
+//     Content change example: typing in an autocomplete changes the number of options, leading
+//         to a different fit. Would want to re-use the last position in this case
+
+
 // TODO: use cached ClientRects when possible
-// TODO: add api for viewport margin
-// TODO: move clipping detection to scroll strategy
+// - Only invalidate viewport rect on scroll / resize.
+// - Only invalidate origin rect and overlay rect on content change (mutation observer?)
+//
+// Nothing captures the styles of the viewport/origin changing (esp. wrt cascading stlyes),
+// but this may be a decent tradeoff for avoiding recalculating
+
+
+
+
+// TODO: refactor clipping detection into a separate file
 // TODO: add offsets and origin element to a per-position setting
 // TODO: attribute selector to specify the transform-origin inside the overlay content
-// TODO: Use Directionality
+// TODO: unit tests
+
+
 // TODO: create `DropdownPositionStrategy` and `TooltipPositionStrategy`, which are pre-configured
 //       connected position strategies
-// TODO: explore easier position setting (e.g., saying "bottom-center")
-// TODO: unit tests
 // TODO: change existing components to new strategy
 
 
@@ -67,12 +81,6 @@ type ElementBoundingPositions = {
 export class BetterConnectedPositionStrategy implements PositionStrategy {
   /** The overlay to which this strategy is attached. */
   private _overlayRef: OverlayRef;
-
-  /** The offset in pixels for the overlay connection point on the x-axis */
-  private _offsetX: number = 0;
-
-  /** The offset in pixels for the overlay connection point on the y-axis */
-  private _offsetY: number = 0;
 
   /** Whether we're performing the very first positioning of the overlay. */
   private _isInitialRender = true;
@@ -109,10 +117,10 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   private _pane: HTMLElement;
 
   /**
-   * Parent element for the overlay panel. Used to constrain the overlay panel's size to fit
-   * inside the viewport.
+   * Parent element for the overlay panel used to constrain the overlay panel's size to fit
+   * within the viewport.
    */
-  private _sizingWrapper: HTMLDivElement;
+  private _boundingBox: HTMLDivElement;
 
   /** The last position to have been calculated as the best fit position. */
   private _lastConnectedPosition: ConnectionPositionPair;
@@ -130,7 +138,6 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     return this._overlayRef.getState().direction === 'rtl';
   }
 
-
   /** Ordered list of preferred positions, from most to least desirable. */
   get positions() { return this._preferredPositions; }
 
@@ -145,8 +152,8 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
   /** Cleanup after the element gets destroyed. */
   dispose() {
-    if (this._sizingWrapper && this._sizingWrapper.parentNode) {
-      this._sizingWrapper.parentNode.removeChild(this._sizingWrapper);
+    if (this._boundingBox && this._boundingBox.parentNode) {
+      this._boundingBox.parentNode.removeChild(this._boundingBox);
     }
   }
 
@@ -160,10 +167,10 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
     if (this._isInitialRender) {
       // If we haven't attached the element to its sizing container yet, do so now.
-      this._sizingWrapper = this._createSizeConstraintWrapper();
-      if (element.parentNode && element.parentNode !== this._sizingWrapper) {
-        element.parentNode.insertBefore(this._sizingWrapper, element);
-        this._sizingWrapper.appendChild(element);
+      this._boundingBox = this._creatingBoundingBox();
+      if (element.parentNode && element.parentNode !== this._boundingBox) {
+        element.parentNode.insertBefore(this._boundingBox, element);
+        this._boundingBox.appendChild(element);
       }
 
       // We need the bounding rects for the origin and the overlay to determine how to position
@@ -172,19 +179,18 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       this._overlayRect = element.getBoundingClientRect();
 
       // We use the viewport rect to determine whether a position would go off-screen.
-      this._viewportRect = this._viewportRuler.getViewportRect();
+      this._viewportRect = this._narrowViewportRect(this._viewportRuler.getViewportRect());
 
-      // DEBUG: set styles on overlay element (this should be moved to the css class)
-      element.style.position = 'absolute';
-      element.style.maxHeight = '100%';
-      element.style.overflow = 'auto';
-      element.style.display = 'flex'; // needed for content max-height: 100% to work.
+      // TODO: need to limit when we update these rects
+      // this._isInitialRender = false;
     }
 
     const originRect = this._originRect;
     const overlayRect = this._overlayRect;
     const viewportRect = this._viewportRect;
 
+    // Positions where the overlay will fit with flexible dimensions.
+    const flexibleFits: FlexibleFit[] = [];
 
     // Fallback if none of the preferred positions fit within the viewport.
     let fallback: FallbackPosition | undefined;
@@ -216,16 +222,42 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       // If the overlay has flexible dimensions, we can use this position so long as there's enough
       // space for the minimum dimensions.
       if (this._canFitWithFlexibleDimensions(overlayFit, overlayPoint, viewportRect)) {
-        this._applyPosition(element, pos, originPoint, viewportRect);
-        return;
+        // Save positions where the overlay will fit with flexible dimensions. We will use these
+        // if none of the positions fit *without* flexible dimensions.
+        flexibleFits.push({
+          position: pos,
+          origin: originPoint,
+          overlayRect,
+          boundingBoxRect: this._calculateBoundingBoxRect(originPoint, pos, viewportRect)
+        });
+
+        continue;
       }
 
       // If the current preferred position does not fit on the screen, remember the position
       // if it has more visible area on-screen than we've seen and move onto the next preferred
       // position.
       if (!fallback || fallback.overlayFit.visibleArea < overlayFit.visibleArea) {
-        fallback = {overlayFit, overlayPoint, originPoint, pos};
+        fallback = {overlayFit, overlayPoint, originPoint, pos, overlayRect};
       }
+    }
+
+    // If there are any positions where the overlay would fit with flexible dimensions, choose the
+    // one that has the greatest area available modified by the position's weight
+    if (flexibleFits.length) {
+      let bestFit: FlexibleFit | null = null;
+      let bestScore = 0;
+      for (const fit of flexibleFits) {
+        const score =
+            fit.boundingBoxRect.width * fit.boundingBoxRect.height * (fit.position.weight || 1);
+        if (score > bestScore) {
+          bestScore = score;
+          bestFit = fit;
+        }
+      }
+
+      this._applyPosition(element, bestFit!.position, bestFit!.origin, viewportRect);
+      return;
     }
 
     // When none of the preferred positions exactly fit within the viewport, take the position
@@ -241,8 +273,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
     // All options for getting the overlay within the viewport have been exhausted, so go with the
     // position that went off-screen the least.
-    this._applyPosition(
-        element, fallback!.pos, fallback!.originPoint, viewportRect);
+    this._applyPosition(element, fallback!.pos, fallback!.originPoint, viewportRect);
   }
 
   /**
@@ -251,14 +282,13 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    * allows one to re-align the panel without changing the orientation of the panel.
    */
   recalculateLastPosition(): void {
+    // todo: don't recalculate
     const originRect = this._origin.getBoundingClientRect();
-    const overlayRect = this._pane.getBoundingClientRect();
-    const viewportRect = this._viewportRuler.getViewportRect();
+    const viewportRect = this._narrowViewportRect(this._viewportRuler.getViewportRect());
     const lastPosition = this._lastConnectedPosition || this._preferredPositions[0];
 
     let originPoint = this._getOriginConnectionPoint(originRect, lastPosition);
-    let overlayPoint = this._getOverlayPoint(originPoint, overlayRect, lastPosition);
-    this._setElementPosition(this._pane, overlayRect, overlayPoint, lastPosition);
+    this._applyPosition(this._pane, this._lastConnectedPosition, originPoint, viewportRect);
   }
 
   /**
@@ -279,21 +309,8 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     return this;
   }
 
-  /**
-   * Sets an offset for the overlay's connection point on the x-axis
-   * @param offset New offset in the X axis.
-   */
-  withOffsetX(offset: number): this {
-    this._offsetX = offset;
-    return this;
-  }
-
-  /**
-   * Sets an offset for the overlay's connection point on the y-axis
-   * @param  offset New offset in the Y axis.
-   */
-  withOffsetY(offset: number): this {
-    this._offsetY = offset;
+  withViewportMargin(margin: number): this {
+    this._viewportMargin = margin;
     return this;
   }
 
@@ -343,13 +360,12 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
   /**
    * Gets the (x, y) coordinate of the top-left corner of the overlay given a given position and
-   * origin point to which the overlay should be connected, as well as how much of the element
-   * would be inside the viewport at that position.
+   * origin point to which the overlay should be connected.
    */
   private _getOverlayPoint(
       originPoint: Point,
       overlayRect: ClientRect,
-      pos: ConnectionPositionPair): Point {
+      pos: ConnectedPosition): Point {
     // Calculate the (overlayStartX, overlayStartY), the start of the potential overlay position
     // relative to the origin point.
     let overlayStartX: number;
@@ -370,8 +386,8 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
     // The (x, y) coordinates of the overlay.
     return {
-      x: originPoint.x + overlayStartX + this._offsetX,
-      y: originPoint.y + overlayStartY + this._offsetY
+      x: originPoint.x + overlayStartX,
+      y: originPoint.y + overlayStartY,
     };
   }
 
@@ -463,7 +479,8 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       position: ConnectionPositionPair,
       originPoint: Point,
       viewport: ClientRect) {
-    this._setSizingWrapperStyles(originPoint, position, viewport);
+    this._setOverlayElementStyles(position);
+    this._setBoundingBoxStyles(originPoint, position, viewport);
 
     // Save the last connected position in case the position needs to be re-calculated.
     this._lastConnectedPosition = position;
@@ -475,45 +492,32 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   }
 
   /**
-   * Sets the position and size of the overlay's sizing wrapper. The wrapper is positioned on the
-   * origin's connection point and stetches to the bounds of the viewport.
+   * Gets the position and size of the overlay's sizing container.
    *
-   * @param originPoint The point on the origin element where the overlay is connected.
-   * @param position The position preference
-   * @param viewport The geometry of the viewport.
+   * This method does no measuring and applies no styles so that we can cheaply compute the
+   * bounds for all positions and choose the best fit based on these results.
    */
-  private _setSizingWrapperStyles(
-      originPoint: Point,
-      position: ConnectionPositionPair,
-      viewport: ClientRect): void {
-    let style = {} as CSSStyleDeclaration;
-
-    // Align the overlay panel to the appropriate edge of the size-constraining container.
-    // todo: move this to another function
-    this._pane.style[position.overlayX === 'end' ? 'right' : 'left'] = '0';
-    this._pane.style[position.overlayY === 'bottom' ? 'bottom' : 'top'] = '0';
-
-    let sizingContainerHeight, sizingContainerTop;
+  private _calculateBoundingBoxRect(
+      origin: Point, position: ConnectedPosition, viewport: ClientRect): BoundingBoxRect {
+    let height, top;
 
     if (position.overlayY === 'top') {
-      // Overlay is opening "downward".
-      sizingContainerHeight = viewport.bottom - originPoint.y;
-      sizingContainerTop = originPoint.y;
+      // Overlay is opening "downward" and thus is bound by the bottom viewport edge.
+      top = origin.y;
+      height = viewport.bottom - origin.y;
     } else if (position.overlayY === 'bottom') {
-      // Overlay is opening "upward"
-      sizingContainerHeight = originPoint.y - viewport.top;
-      sizingContainerTop = viewport.top;
+      // Overlay is opening "upward" and thus is bound by the top viewport edge.
+      top = viewport.top;
+      height = origin.y - viewport.top;
     } else {
+      // If neither top nor bottom, the overlay is vertically centered on the origin point.
+      // todo: more comment
       const smallestDistanceToViewportEdge =
-          Math.min(viewport.bottom - originPoint.y, originPoint.y - viewport.left);
+          Math.min(viewport.bottom - origin.y, origin.y - viewport.left);
 
-      sizingContainerHeight = smallestDistanceToViewportEdge * 2;
-      sizingContainerTop = originPoint.y - smallestDistanceToViewportEdge;
-      style.alignItems = 'center';
+      height = smallestDistanceToViewportEdge * 2;
+      top = origin.y - smallestDistanceToViewportEdge;
     }
-
-    style.height = `${sizingContainerHeight}px`;
-    style.top = `${sizingContainerTop}px`;
 
     // I.e., overlay is opening "right-ward"
     const isBoundedByRightViewportEdge =
@@ -525,26 +529,83 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
         (position.overlayX === 'end' && !this._isRtl()) ||
         (position.overlayX === 'start' && this._isRtl());
 
-    let sizingContainerWidth, sizingContainerLeft;
+    let width, left;
 
     if (isBoundedByLeftViewportEdge) {
-      sizingContainerWidth = originPoint.x - viewport.left;
-      sizingContainerLeft = viewport.left;
+      left = viewport.left;
+      width = origin.x - viewport.left;
     } else if (isBoundedByRightViewportEdge) {
-      sizingContainerWidth = viewport.right - originPoint.x;
-      sizingContainerLeft = originPoint.x;
+      left = origin.x;
+      width = viewport.right - origin.x;
     } else {
+      // If neither start nor end, the overlay is horizontally centered on the origin point.
+      // todo: more comment
       const smallestDistanceToViewportEdge =
-          Math.min(viewport.right - originPoint.x, originPoint.x - viewport.top);
-      sizingContainerWidth = smallestDistanceToViewportEdge * 2;
-      sizingContainerLeft = originPoint.x - smallestDistanceToViewportEdge;
-      style.justifyContent = 'center';
+          Math.min(viewport.right - origin.x, origin.x - viewport.top);
+      width = smallestDistanceToViewportEdge * 2;
+      left = origin.x - smallestDistanceToViewportEdge;
     }
 
-    style.width = `${sizingContainerWidth}px`;
-    style.left = `${sizingContainerLeft}px`;
+    return {top, left, width, height};
+  }
 
-    extendObject(this._sizingWrapper.style, style);
+  /**
+   * Sets the position and size of the overlay's sizing wrapper. The wrapper is positioned on the
+   * origin's connection point and stetches to the bounds of the viewport.
+   *
+   * @param origin The point on the origin element where the overlay is connected.
+   * @param position The position preference
+   * @param viewport The geometry of the viewport.
+   */
+  private _setBoundingBoxStyles(
+      origin: Point,
+      position: ConnectedPosition,
+      viewport: ClientRect): void {
+
+    const boundingBoxRect = this._calculateBoundingBoxRect(origin, position, viewport);
+
+    const styles = {
+      top: `${boundingBoxRect.top}px`,
+      left: `${boundingBoxRect.left}px`,
+      width: `${boundingBoxRect.width}px`,
+      height: `${boundingBoxRect.height}px`,
+    } as CSSStyleDeclaration;
+
+    extendObject(this._boundingBox.style, styles);
+  }
+
+  /** Sets positioning styles to the overlay element. */
+  private _setOverlayElementStyles(position: ConnectedPosition): void {
+    // Reset styles from any previous positioning.
+    const style = {
+      top: '',
+      left: '',
+      bottom: '',
+      right: '',
+    } as CSSStyleDeclaration;
+
+    // Align the overlay panel to the appropriate edge of the size-constraining container unless
+    // using a 'center' position.
+    if (position.overlayX !== 'center') {
+      style[position.overlayX === 'end' ? 'right' : 'left'] = '0';
+    }
+
+    if (position.overlayY !== 'center') {
+      style[position.overlayY === 'bottom' ? 'bottom' : 'top'] = '0';
+    }
+
+    // Use a negative margin to apply the position's offset. We do this because the `center`
+    // positions rely on being in the normal flex flow and setting a `top` / `left` at all will
+    // completely throw off the position.
+    if (position.offsetX) {
+      style[position.offsetX < 0 ? 'margin-left' : 'margin-right'] = -Math.abs(position.offsetX);
+    }
+
+    if (position.offsetY) {
+      style[position.offsetY < 0 ? 'margin-top' : 'margin-bottom'] = -Math.abs(position.offsetY);
+    }
+
+    extendObject(this._pane.style, style);
   }
 
   /**
@@ -594,49 +655,6 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     });
   }
 
-  /** Physically positions the overlay element to the given coordinate. */
-  private _setElementPosition(
-      element: HTMLElement,
-      overlayRect: ClientRect,
-      overlayPoint: Point,
-      pos: ConnectionPositionPair) {
-
-    // We want to set either `top` or `bottom` based on whether the overlay wants to appear above
-    // or below the origin and the direction in which the element will expand.
-    let verticalStyleProperty = pos.overlayY === 'bottom' ? 'bottom' : 'top';
-
-    // When using `bottom`, we adjust the y position such that it is the distance
-    // from the bottom of the viewport rather than the top.
-    let y = verticalStyleProperty === 'top' ?
-        overlayPoint.y :
-        document.documentElement.clientHeight - (overlayPoint.y + overlayRect.height);
-
-    // We want to set either `left` or `right` based on whether the overlay wants to appear "before"
-    // or "after" the origin, which determines the direction in which the element will expand.
-    // For the horizontal axis, the meaning of "before" and "after" change based on whether the
-    // page is in RTL or LTR.
-    let horizontalStyleProperty: string;
-    if (this._isRtl()) {
-      horizontalStyleProperty = pos.overlayX === 'end' ? 'left' : 'right';
-    } else {
-      horizontalStyleProperty = pos.overlayX === 'end' ? 'right' : 'left';
-    }
-
-    // When we're setting `right`, we adjust the x position such that it is the distance
-    // from the right edge of the viewport rather than the left edge.
-    let x = horizontalStyleProperty === 'left' ?
-      overlayPoint.x :
-      document.documentElement.clientWidth - (overlayPoint.x + overlayRect.width);
-
-
-    // Reset any existing styles. This is necessary in case the preferred position has
-    // changed since the last `apply`.
-    ['top', 'bottom', 'left', 'right'].forEach(p => element.style[p] = null);
-
-    element.style[verticalStyleProperty] = `${y}px`;
-    element.style[horizontalStyleProperty] = `${x}px`;
-  }
-
   /** Returns the bounding positions of the provided element with respect to the viewport. */
   private _getElementBounds(element: HTMLElement): ElementBoundingPositions {
     const boundingClientRect = element.getBoundingClientRect();
@@ -658,7 +676,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   }
 
   /** Narrows the given viewport rect by the current _viewportMargin. */
-  private _narrowViewportRectWith(rect: ClientRect): ClientRect {
+  private _narrowViewportRect(rect: ClientRect): ClientRect {
     return {
       top:    rect.top    + this._viewportMargin,
       left:   rect.left   + this._viewportMargin,
@@ -673,14 +691,11 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    * Creates a wrapper element for the overlay to constrain the size of the overlay panel via
    * setting top/bottom/left/right on the wrapper.
    */
-  _createSizeConstraintWrapper(): HTMLDivElement {
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('debug-wrapper');
-    wrapper.dir = this._overlayRef.getState().direction || 'ltr';
-    // todo: use a css class for this
-    wrapper.style.position = 'absolute';
-    wrapper.style.zIndex = '1000';
-    return wrapper;
+  _creatingBoundingBox(): HTMLDivElement {
+    const boundingBox = document.createElement('div');
+    boundingBox.classList.add('cdk-overlay-connected-pos-bounding-box');
+    boundingBox.dir = this._overlayRef.getState().direction || 'ltr';
+    return boundingBox;
   }
 }
 
@@ -690,7 +705,7 @@ interface Point {
   y: number;
 }
 
-/** How well an overlay (at a given position) fits into the viewport. */
+/** Record of measurements for how an overlay (at a given position) fits into the viewport. */
 interface OverlayFit {
   /** Whether the overlay fits completely in the viewport. */
   isCompletelyWithinViewport: boolean;
@@ -705,14 +720,32 @@ interface OverlayFit {
   visibleArea: number;
 }
 
+/** Record of the measurments determining whether an overlay will fit in a specific position. */
 interface FallbackPosition {
+  pos: ConnectedPosition;
+  originPoint: Point;
   overlayPoint: Point;
   overlayFit: OverlayFit;
-  originPoint: Point;
-  pos: ConnectionPositionPair;
+  overlayRect: ClientRect;
 }
 
+/** Position and size of the overlay sizing wrapper for a specific position. */
+interface BoundingBoxRect {
+  top: number;
+  left: number;
+  height: number;
+  width: number;
+}
 
+/** Record of measures determining how well a given position will fit with flexible dimensions. */
+interface FlexibleFit {
+  position: ConnectedPosition;
+  origin: Point;
+  overlayRect: ClientRect;
+  boundingBoxRect: BoundingBoxRect;
+}
+
+/** A connected position as specified by the user. */
 export interface ConnectedPosition {
   originX: 'start' | 'center' | 'end'
   originY: 'top' | 'center' | 'bottom';
