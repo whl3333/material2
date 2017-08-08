@@ -43,6 +43,7 @@ export class ConnectedOverlayDemo {
         .withFlexibleHeight(this.isFlexible)
         .withFlexibleWidth(this.isFlexible)
         .withPush(this.canPush)
+        .withViewportMargin(10)
         .withPositions([{
           originX: this.originX,
           originY: this.originY,

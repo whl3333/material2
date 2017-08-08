@@ -12,7 +12,7 @@ import {ViewportRuler} from './viewport-ruler';
 import {
   ConnectedOverlayPositionChange,
   ConnectionPositionPair,
-  ScrollingVisibility
+  ScrollingVisibility,
 } from './connected-position';
 import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
@@ -95,7 +95,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   private _boundingBox: HTMLDivElement;
 
   /** The last position to have been calculated as the best fit position. */
-  private _lastConnectedPosition: ConnectionPositionPair;
+  private _lastPosition: ConnectedPosition;
 
   _positionChange = new Subject<ConnectedOverlayPositionChange>();
 
@@ -160,8 +160,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     }
 
 
-    this._boundingBox.style.cssText = '';
-    this._boundingBox.parentNode!.appendChild(this._pane);
+    this._boundingBox.style.cssText = 'top: 0; left: 0; right: 0; bottom: 0';
 
     // We need the bounding rects for the origin and the overlay to determine how to position
     // the overlay relative to the origin.
@@ -175,8 +174,6 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     const originRect = this._originRect;
     const overlayRect = this._overlayRect;
     const viewportRect = this._viewportRect;
-
-    this._boundingBox.appendChild(this._pane);
 
     // Positions where the overlay will fit with flexible dimensions.
     const flexibleFits: FlexibleFit[] = [];
@@ -272,10 +269,10 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     this._originRect = this._origin.getBoundingClientRect();
     this._overlayRect = this._pane.getBoundingClientRect();
     this._viewportRect = this._narrowViewportRect(this._viewportRuler.getViewportRect());
-    const lastPosition = this._lastConnectedPosition || this._preferredPositions[0];
+    const lastPosition = this._lastPosition || this._preferredPositions[0];
 
     let originPoint = this._getOriginPoint(this._originRect, lastPosition);
-    this._applyPosition(this._lastConnectedPosition, originPoint);
+    this._applyPosition(this._lastPosition, originPoint);
   }
 
   /**
@@ -499,7 +496,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     this._setBoundingBoxStyles(originPoint, position);
 
     // Save the last connected position in case the position needs to be re-calculated.
-    this._lastConnectedPosition = position;
+    this._lastPosition = position;
 
     // Notify that the position has been changed along with its change properties.
     const scrollableViewProperties = this.getScrollVisibility();
