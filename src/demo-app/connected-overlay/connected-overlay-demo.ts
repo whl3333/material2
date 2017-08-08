@@ -27,6 +27,8 @@ export class ConnectedOverlayDemo {
   originY: VerticalConnectionPos = 'bottom';
   overlayX: HorizontalConnectionPos = 'start';
   overlayY: VerticalConnectionPos = 'top';
+  isFlexible = true;
+  canPush = true;
 
   overlayRef: OverlayRef | null;
 
@@ -38,6 +40,9 @@ export class ConnectedOverlayDemo {
   openWithConfig() {
     let strategy = this.overlay.position()
         .betterConnectedTo(this._overlayOrigin.elementRef)
+        .withFlexibleHeight(this.isFlexible)
+        .withFlexibleWidth(this.isFlexible)
+        .withPush(this.canPush)
         .withPositions([{
           originX: this.originX,
           originY: this.originY,
@@ -46,14 +51,16 @@ export class ConnectedOverlayDemo {
           weight: 2,
         }, {
           originX: this.originX,
-          originY: this.originY,
+          originY: 'top',
           overlayX: this.overlayX,
-          overlayY: this.overlayY,
+          overlayY: 'bottom',
         }]);
 
     let config = new OverlayState();
     config.positionStrategy = strategy;
     config.direction = this.dir.value;
+
+    config.scrollStrategy = this.overlay.scrollStrategies.reposition();
 
     this.overlayRef = this.overlay.create(config);
     this.overlayRef.attach(new ComponentPortal(DemoOverlay, this.viewContainerRef));

@@ -2,7 +2,7 @@
 
 <div class="demo-options">
   <div>
-    <h3>Origin X</h3>
+    <h4>Origin X</h4>
     <md-radio-group [(ngModel)]="originX">
       <md-radio-button value="start">start</md-radio-button>
       <md-radio-button value="center">center</md-radio-button>
@@ -11,7 +11,7 @@
   </div>
 
   <div>
-    <h3>Origin Y</h3>
+    <h4>Origin Y</h4>
     <md-radio-group [(ngModel)]="originY">
       <md-radio-button value="top">top</md-radio-button>
       <md-radio-button value="center">center</md-radio-button>
@@ -20,7 +20,7 @@
   </div>
 
   <div>
-    <h3>Overlay X</h3>
+    <h4>Overlay X</h4>
     <md-radio-group [(ngModel)]="overlayX">
       <md-radio-button value="start">start</md-radio-button>
       <md-radio-button value="center">center</md-radio-button>
@@ -29,7 +29,7 @@
   </div>
 
   <div>
-    <h3>Overlay Y</h3>
+    <h4>Overlay Y</h4>
     <md-radio-group [(ngModel)]="overlayY">
       <md-radio-button value="top">top</md-radio-button>
       <md-radio-button value="center">center</md-radio-button>
@@ -42,6 +42,8 @@
       Number of items in the overlay
       <input #count type="number" value="5" (input)="updateCount(count.value)">
     </label>
+    <md-checkbox [(ngModel)]="isFlexible">Allow flexible dimensions</md-checkbox>
+    <md-checkbox [(ngModel)]="canPush">Allow push</md-checkbox>
   </div>
 
   <div>

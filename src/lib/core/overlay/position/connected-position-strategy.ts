@@ -13,7 +13,7 @@ import {
   ConnectionPositionPair,
   OriginConnectionPosition,
   OverlayConnectionPosition,
-  ConnectedOverlayPositionChange, ScrollableViewProperties
+  ConnectedOverlayPositionChange, ScrollingVisibility
 } from './connected-position';
 import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
@@ -322,7 +322,7 @@ export class ConnectedPositionStrategy implements PositionStrategy {
    * Gets the view properties of the trigger and overlay, including whether they are clipped
    * or completely outside the view of any of the strategy's scrollables.
    */
-  private getScrollableViewProperties(overlay: HTMLElement): ScrollableViewProperties {
+  private getScrollableViewProperties(overlay: HTMLElement): ScrollingVisibility {
     const originBounds = this._getElementBounds(this._origin);
     const overlayBounds = this._getElementBounds(overlay);
     const scrollContainerBounds = this.scrollables.map((scrollable: Scrollable) => {
