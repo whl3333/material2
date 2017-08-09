@@ -29,6 +29,7 @@ export class ConnectedOverlayDemo {
   overlayY: VerticalConnectionPos = 'top';
   isFlexible = true;
   canPush = true;
+  showBoundingBox = false;
 
   overlayRef: OverlayRef | null;
 
@@ -60,6 +61,8 @@ export class ConnectedOverlayDemo {
     let config = new OverlayState();
     config.positionStrategy = strategy;
     config.direction = this.dir.value;
+    config.minHeight = 50;
+    config.maxHeight = 250;
 
     config.scrollStrategy = this.overlay.scrollStrategies.reposition();
 
@@ -71,11 +74,21 @@ export class ConnectedOverlayDemo {
     if (this.overlayRef) {
       this.overlayRef.dispose();
       this.overlayRef = null;
+      this.showBoundingBox = false;
     }
   }
 
   updateCount(value: number) {
     itemCount = +value;
+  }
+
+  toggleShowBoundingBox() {
+    const box = document.querySelector('.cdk-overlay-connected-pos-bounding-box');
+
+    if (box) {
+      this.showBoundingBox = !this.showBoundingBox;
+      box.classList.toggle('demo-show-box');
+    }
   }
 }
 

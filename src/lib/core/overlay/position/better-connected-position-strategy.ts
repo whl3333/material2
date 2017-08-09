@@ -577,7 +577,20 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       left: `${boundingBoxRect.left}px`,
       width: `${boundingBoxRect.width}px`,
       height: `${boundingBoxRect.height}px`,
+      // Reset `bottom` and `right` styles that were reset at the begining of `apply`.
+      bottom: '',
+      right: '',
     } as CSSStyleDeclaration;
+
+    const maxHeight = this._overlayRef.getState().maxHeight;
+    if (maxHeight) {
+      styles.maxHeight = formatCssUnit(maxHeight);
+    }
+
+    const maxWidth = this._overlayRef.getState().maxWidth;
+    if (maxWidth) {
+      styles.maxWidth = formatCssUnit(maxWidth);
+    }
 
     extendObject(this._boundingBox.style, styles);
   }
@@ -611,6 +624,17 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
     if (position.offsetY) {
       style[position.offsetY < 0 ? 'margin-top' : 'margin-bottom'] = -Math.abs(position.offsetY);
+    }
+
+    // If a maxWidth or maxHeight is specified on the overlay, we remove them. We do this because
+    // we need these values to both be set to "100%" for the automatic flexible sizing to work.
+    // The maxHeight and maxWidth are set on the boundingBox in order to enforce the constraint.
+    if (this._overlayRef.getState().maxHeight) {
+      style.maxHeight = '';
+    }
+
+    if (this._overlayRef.getState().maxWidth) {
+      style.maxWidth = '';
     }
 
     extendObject(this._pane.style, style);
@@ -665,6 +689,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     const boundingBox = document.createElement('div');
     boundingBox.classList.add('cdk-overlay-connected-pos-bounding-box');
     boundingBox.dir = this._overlayRef.getState().direction || 'ltr';
+
     return boundingBox;
   }
 }
@@ -726,4 +751,9 @@ export interface ConnectedPosition {
   weight?: number;
   offsetX?: number;
   offsetY?: number;
+}
+
+// TODO: move to common place
+function formatCssUnit(value: number | string) {
+  return typeof value === 'string' ? value as string : `${value}px`;
 }

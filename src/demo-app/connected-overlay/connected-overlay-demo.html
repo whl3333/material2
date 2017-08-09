@@ -44,6 +44,10 @@
     </label>
     <md-checkbox [(ngModel)]="isFlexible">Allow flexible dimensions</md-checkbox>
     <md-checkbox [(ngModel)]="canPush">Allow push</md-checkbox>
+    <md-checkbox [checked]="showBoundingBox" [disabled]="!overlayRef"
+        (click)="toggleShowBoundingBox()">
+      Show bounding box
+    </md-checkbox>
   </div>
 
   <div>

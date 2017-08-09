@@ -25,7 +25,11 @@ demo-overlay {
   padding: 10px;
 }
 
-.debug-wrapper {
+.cdk-overlay-connected-pos-bounding-box.demo-show-box {
   background: orangered;
   opacity: 0.2;
+
+  .cdk-overlay-pane {
+    opacity: 1;
+  }
 }
