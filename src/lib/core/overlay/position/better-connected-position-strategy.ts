@@ -575,8 +575,13 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     // It's weird if the overlay *grows* while scrolling, so we take the last size into account
     // when applying a new size.
     if (!this._isInitialRender && !this._growAfterOpen) {
-      height = Math.min(height, this._lastBoundingBoxHeight);
-      width = Math.min(width, this._lastBoundingBoxWidth);
+      if (position.originY !== 'center') {
+        height = Math.min(height, this._lastBoundingBoxHeight);
+      }
+
+      if (position.originX !== 'center') {
+        width = Math.min(width, this._lastBoundingBoxWidth);
+      }
     }
 
     return {top, left, bottom, right, width, height};

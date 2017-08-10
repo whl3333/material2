@@ -53,12 +53,22 @@ export class ConnectedOverlayDemo {
           weight: 2,
         },
         {
-          originX: this.originX,
+          originX: 'start',
           originY: 'top',
-          overlayX: this.overlayX,
+          overlayX: 'start',
           overlayY: 'bottom',
-        }
+        },
+        {
+          originX: 'start',
+          originY: 'bottom',
+          overlayX: 'start',
+          overlayY: 'top',
+        },
         ]);
+
+    strategy.positionChange.subscribe(e => {
+      console.log('position: ', e);
+    });
 
     let config = new OverlayState();
     config.positionStrategy = strategy;
