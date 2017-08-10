@@ -166,7 +166,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     }
 
 
-    this._resetBoundingBoxPositionStyles();
+    this._resetBoundingBoxStyles();
 
     // We need the bounding rects for the origin and the overlay to determine how to position
     // the overlay relative to the origin.
@@ -511,7 +511,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     this._lastPosition = position;
 
     // Notify that the position has been changed along with its change properties.
-    const scrollableViewProperties = this.getScrollVisibility();
+    const scrollableViewProperties = this._getScrollVisibility();
     const changeEvent = new ConnectedOverlayPositionChange(position, scrollableViewProperties);
     this._positionChange.next(changeEvent);
     this._isInitialRender = false;
@@ -543,6 +543,10 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
       height = smallestDistanceToViewportEdge * 2;
       top = origin.y - smallestDistanceToViewportEdge;
+
+      if (height > this._lastBoundingBoxHeight && !this._isInitialRender && !this._growAfterOpen) {
+        top = origin.y - (this._lastBoundingBoxHeight / 2);
+      }
     }
 
     // I.e., overlay is opening "right-ward"
@@ -570,17 +574,9 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
           Math.min(viewport.right - origin.x, origin.x - viewport.top);
       width = smallestDistanceToViewportEdge * 2;
       left = origin.x - smallestDistanceToViewportEdge;
-    }
 
-    // It's weird if the overlay *grows* while scrolling, so we take the last size into account
-    // when applying a new size.
-    if (!this._isInitialRender && !this._growAfterOpen) {
-      if (position.originY !== 'center') {
-        height = Math.min(height, this._lastBoundingBoxHeight);
-      }
-
-      if (position.originX !== 'center') {
-        width = Math.min(width, this._lastBoundingBoxWidth);
+      if (width > this._lastBoundingBoxWidth && !this._isInitialRender && !this._growAfterOpen) {
+        left = origin.x - (this._lastBoundingBoxWidth / 2);
       }
     }
 
@@ -596,6 +592,13 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    */
   private _setBoundingBoxStyles(origin: Point, position: ConnectedPosition): void {
     const boundingBoxRect = this._calculateBoundingBoxRect(origin, position);
+
+    // It's weird if the overlay *grows* while scrolling, so we take the last size into account
+    // when applying a new size.
+    if (!this._isInitialRender && !this._growAfterOpen) {
+      boundingBoxRect.height = Math.min(boundingBoxRect.height, this._lastBoundingBoxHeight);
+      boundingBoxRect.width = Math.min(boundingBoxRect.width, this._lastBoundingBoxWidth);
+    }
 
     const styles = {
       width: `${boundingBoxRect.width}px`,
@@ -622,9 +625,16 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     extendObject(this._boundingBox.style, styles);
   }
 
-  /** Resets the position styles for the bounding box so that a new positioning can be computed. */
-  private _resetBoundingBoxPositionStyles() {
-    extendObject(this._boundingBox.style, {top: '', left: '', right: '', bottom: ''});
+  /** Resets the styles for the bounding box so that a new positioning can be computed. */
+  private _resetBoundingBoxStyles() {
+    extendObject(this._boundingBox.style, {
+      top: '0',
+      left: '0',
+      right: '0',
+      bottom: '0',
+      height: '',
+      width: ''
+    });
   }
 
   /** Sets positioning styles to the overlay element. */
@@ -676,7 +686,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    * Gets the view properties of the trigger and overlay, including whether they are clipped
    * or completely outside the view of any of the strategy's scrollables.
    */
-  private getScrollVisibility(): ScrollingVisibility {
+  private _getScrollVisibility(): ScrollingVisibility {
     const originBounds = this._originRect;
     const overlayBounds = this._overlayRect;
 
