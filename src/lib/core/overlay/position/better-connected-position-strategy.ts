@@ -512,7 +512,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    */
   private _calculateBoundingBoxRect(origin: Point, position: ConnectedPosition): BoundingBoxRect {
     const viewport = this._viewportRect;
-    let height, top;
+    let height, top, bottom;
 
     if (position.overlayY === 'top') {
       // Overlay is opening "downward" and thus is bound by the bottom viewport edge.
@@ -520,7 +520,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       height = viewport.bottom - origin.y;
     } else if (position.overlayY === 'bottom') {
       // Overlay is opening "upward" and thus is bound by the top viewport edge.
-      top = viewport.top;
+      bottom = viewport.bottom - origin.y + this._viewportMargin;
       height = origin.y - viewport.top;
     } else {
       // If neither top nor bottom, the overlay is vertically centered on the origin point.
@@ -542,10 +542,10 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
         (position.overlayX === 'end' && !this._isRtl()) ||
         (position.overlayX === 'start' && this._isRtl());
 
-    let width, left;
+    let width, left, right;
 
     if (isBoundedByLeftViewportEdge) {
-      left = viewport.left;
+      right = viewport.right - origin.x + this._viewportMargin;
       width = origin.x - viewport.left;
     } else if (isBoundedByRightViewportEdge) {
       left = origin.x;
@@ -559,7 +559,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       left = origin.x - smallestDistanceToViewportEdge;
     }
 
-    return {top, left, width, height};
+    return {top, left, bottom, right, width, height};
   }
 
   /**
@@ -573,13 +573,12 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     const boundingBoxRect = this._calculateBoundingBoxRect(origin, position);
 
     const styles = {
-      top: `${boundingBoxRect.top}px`,
-      left: `${boundingBoxRect.left}px`,
       width: `${boundingBoxRect.width}px`,
       height: `${boundingBoxRect.height}px`,
-      // Reset `bottom` and `right` styles that were reset at the begining of `apply`.
-      bottom: '',
-      right: '',
+      top: boundingBoxRect.top ? `${boundingBoxRect.top}px` : '',
+      bottom: boundingBoxRect.bottom ? `${boundingBoxRect.bottom}px` : '',
+      left: boundingBoxRect.left ? `${boundingBoxRect.left}px` : '',
+      right: boundingBoxRect.right ? `${boundingBoxRect.right}px` : '',
     } as CSSStyleDeclaration;
 
     const maxHeight = this._overlayRef.getState().maxHeight;
@@ -728,6 +727,8 @@ interface FallbackPosition {
 interface BoundingBoxRect {
   top: number;
   left: number;
+  bottom: number;
+  right: number;
   height: number;
   width: number;
 }

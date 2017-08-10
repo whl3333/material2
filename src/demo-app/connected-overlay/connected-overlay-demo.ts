@@ -51,18 +51,20 @@ export class ConnectedOverlayDemo {
           overlayX: this.overlayX,
           overlayY: this.overlayY,
           weight: 2,
-        }, {
+        },
+        {
           originX: this.originX,
           originY: 'top',
           overlayX: this.overlayX,
           overlayY: 'bottom',
-        }]);
+        }
+        ]);
 
     let config = new OverlayState();
     config.positionStrategy = strategy;
     config.direction = this.dir.value;
     config.minHeight = 50;
-    config.maxHeight = 250;
+    //config.maxHeight = 250;
 
     config.scrollStrategy = this.overlay.scrollStrategies.reposition();
 
