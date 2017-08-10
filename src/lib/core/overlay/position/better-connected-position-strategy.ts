@@ -512,8 +512,8 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
     // Notify that the position has been changed along with its change properties.
     const scrollableViewProperties = this.getScrollVisibility();
-    const positionChange = new ConnectedOverlayPositionChange(position, scrollableViewProperties);
-    this._positionChange.next(positionChange);
+    const changeEvent = new ConnectedOverlayPositionChange(position, scrollableViewProperties);
+    this._positionChange.next(changeEvent);
     this._isInitialRender = false;
   }
 
