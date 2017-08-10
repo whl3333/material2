@@ -26,8 +26,6 @@ import {isElementScrolledOutsideView, isElementClippedByScrolling} from './scrol
 //    This is a change to OverlayRef. Exploring defering the initial positioning until onStable.
 //    Need to confirm w/ Matias that this *reliably* happens before animations start.
 
-// TODO: test with reposition scroll strategy
-// TODO: clear previous size constraint styles on reposition.
 // TODO: test pushing
 // TODO: refactor clipping detection into a separate thing (part of scrolling module)
 // TODO: attribute selector to specify the transform-origin inside the overlay content
@@ -52,11 +50,20 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   /** Whether we're performing the very first positioning of the overlay. */
   private _isInitialRender = true;
 
+  /** Last height used for the bounding box. Used to avoid resizing the overlay after open. */
+  private _lastBoundingBoxHeight = 0;
+
+  /** Last width used for the bounding box. Used to avoid resizing the overlay after open. */
+  private _lastBoundingBoxWidth = 0;
+
   /** Whether the overlay was pushed in a previous positioning. */
   private _isPushed = false;
 
   /** Whether the overlay can be pushed on-screen  */
   private _canPush = true;
+
+  /** Whether the overlay can grow via flexible width/height after the initial open. */
+  private _growAfterOpen = false;
 
   /** Whether the overlay's height can be constrained to fit within the viewport. */
   private _hasFlexibleHeight = true;
@@ -156,11 +163,10 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
         element.parentNode.insertBefore(this._boundingBox, element);
         this._boundingBox.appendChild(element);
       }
-      this._isInitialRender = false;
     }
 
 
-    this._boundingBox.style.cssText = 'top: 0; left: 0; right: 0; bottom: 0';
+    this._resetBoundingBoxPositionStyles();
 
     // We need the bounding rects for the origin and the overlay to determine how to position
     // the overlay relative to the origin.
@@ -311,6 +317,12 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   /** Sets whether the overlay's width can be constrained to fit within the viewport. */
   withFlexibleWidth(flexibleWidth = true): this {
     this._hasFlexibleWidth = flexibleWidth;
+    return this;
+  }
+
+  /** Sets whether the overlay can grow after the initial open via flexible width/height. */
+  withGrowAfterOpen(growAfterOpen = true): this {
+    this._growAfterOpen = growAfterOpen;
     return this;
   }
 
@@ -502,6 +514,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     const scrollableViewProperties = this.getScrollVisibility();
     const positionChange = new ConnectedOverlayPositionChange(position, scrollableViewProperties);
     this._positionChange.next(positionChange);
+    this._isInitialRender = false;
   }
 
   /**
@@ -559,6 +572,13 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       left = origin.x - smallestDistanceToViewportEdge;
     }
 
+    // It's weird if the overlay *grows* while scrolling, so we take the last size into account
+    // when applying a new size.
+    if (!this._isInitialRender && !this._growAfterOpen) {
+      height = Math.min(height, this._lastBoundingBoxHeight);
+      width = Math.min(width, this._lastBoundingBoxWidth);
+    }
+
     return {top, left, bottom, right, width, height};
   }
 
@@ -591,7 +611,15 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       styles.maxWidth = formatCssUnit(maxWidth);
     }
 
+    this._lastBoundingBoxHeight = boundingBoxRect.height;
+    this._lastBoundingBoxWidth = boundingBoxRect.width;
+
     extendObject(this._boundingBox.style, styles);
+  }
+
+  /** Resets the position styles for the bounding box so that a new positioning can be computed. */
+  private _resetBoundingBoxPositionStyles() {
+    extendObject(this._boundingBox.style, {top: '', left: '', right: '', bottom: ''});
   }
 
   /** Sets positioning styles to the overlay element. */
