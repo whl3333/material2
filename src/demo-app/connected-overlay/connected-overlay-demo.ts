@@ -11,7 +11,7 @@ import {
 } from '@angular/material';
 
 
-let itemCount = 5;
+let itemCount = 25;
 
 @Component({
   moduleId: module.id,
@@ -27,7 +27,7 @@ export class ConnectedOverlayDemo {
   originY: VerticalConnectionPos = 'bottom';
   overlayX: HorizontalConnectionPos = 'start';
   overlayY: VerticalConnectionPos = 'top';
-  isFlexible = true;
+  isFlexible = false;
   canPush = true;
   showBoundingBox = false;
 
@@ -52,23 +52,23 @@ export class ConnectedOverlayDemo {
           overlayY: this.overlayY,
           weight: 2,
         },
-        {
-          originX: 'start',
-          originY: 'top',
-          overlayX: 'start',
-          overlayY: 'bottom',
-        },
-        {
-          originX: 'start',
-          originY: 'bottom',
-          overlayX: 'start',
-          overlayY: 'top',
-        },
+        // {
+        //   originX: 'start',
+        //   originY: 'top',
+        //   overlayX: 'start',
+        //   overlayY: 'bottom',
+        // },
+        // {
+        //   originX: 'start',
+        //   originY: 'bottom',
+        //   overlayX: 'start',
+        //   overlayY: 'top',
+        // },
         ]);
 
-    strategy.positionChange.subscribe(e => {
-      console.log('position: ', e);
-    });
+    // strategy.positionChange.subscribe(e => {
+    //   console.log('position: ', e);
+    // });
 
     let config = new OverlayState();
     config.positionStrategy = strategy;

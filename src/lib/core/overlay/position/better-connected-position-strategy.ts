@@ -56,10 +56,13 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   /** Last width used for the bounding box. Used to avoid resizing the overlay after open. */
   private _lastBoundingBoxWidth = 0;
 
+  /** Last measurements bounding box. Used to keep the same position when flexible sizing is off. */
+  private _lastBoundingBoxRect: BoundingBoxRect;
+
   /** Whether the overlay was pushed in a previous positioning. */
   private _isPushed = false;
 
-  /** Whether the overlay can be pushed on-screen  */
+  /** Whether the overlay can be pushed on-screen on the initial open. */
   private _canPush = true;
 
   /** Whether the overlay can grow via flexible width/height after the initial open. */
@@ -154,7 +157,6 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    */
   apply(): void {
     const element = this._pane;
-    this._isPushed = false;
 
     if (this._isInitialRender) {
       // If we haven't attached the element to its sizing container yet, do so now.
@@ -203,6 +205,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
       // If the overlay, without any further work, fits into the viewport, use this position.
       if (overlayFit.isCompletelyWithinViewport) {
+        this._isPushed = false;
         this._applyPosition(pos, originPoint);
         return;
       }
@@ -244,6 +247,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
         }
       }
 
+      this._isPushed = false;
       this._applyPosition(bestFit!.position, bestFit!.origin);
       return;
     }
@@ -255,8 +259,8 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       // not make sense.
       const pushedOrigin =
           this._pushOverlayOnScreen(fallback!.overlayPoint, overlayRect);
-      this._applyPosition(fallback!.pos, pushedOrigin);
       this._isPushed = true;
+      this._applyPosition(fallback!.pos, pushedOrigin);
       return;
     }
 
@@ -327,8 +331,8 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   }
 
   /** Sets whether the overlay can be pushed on-screen if none of the provided positions fit. */
-  withPush(push = true): this {
-    this._canPush = push;
+  withPush(canPush = true): this {
+    this._canPush = canPush;
     return this;
   }
 
@@ -601,8 +605,8 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     }
 
     const styles = {
-      width: `${boundingBoxRect.width}px`,
-      height: `${boundingBoxRect.height}px`,
+      width: this._hasFlexibleWidth ? `${boundingBoxRect.width}px` : '100vw',
+      height: this._hasFlexibleHeight ? `${boundingBoxRect.height}px`: '100vh',
       top: boundingBoxRect.top ? `${boundingBoxRect.top}px` : '',
       bottom: boundingBoxRect.bottom ? `${boundingBoxRect.bottom}px` : '',
       left: boundingBoxRect.left ? `${boundingBoxRect.left}px` : '',
@@ -619,6 +623,16 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       styles.maxWidth = formatCssUnit(maxWidth);
     }
 
+    if (this._isPushed) {
+      styles.bottom = '';
+      styles.right = '';
+      styles.top = `${origin.y}px`;
+      styles.left = `${origin.x}px`;
+      styles.alignItems = 'normal';
+      styles.justifyContent = 'normal';
+    }
+
+    this._lastBoundingBoxRect = boundingBoxRect;
     this._lastBoundingBoxHeight = boundingBoxRect.height;
     this._lastBoundingBoxWidth = boundingBoxRect.width;
 
@@ -633,8 +647,10 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       right: '0',
       bottom: '0',
       height: '',
-      width: ''
-    });
+      width: '',
+      alignItems: '',
+      justifyContent: '',
+    } as CSSStyleDeclaration);
   }
 
   /** Sets positioning styles to the overlay element. */
@@ -649,11 +665,11 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
     // Align the overlay panel to the appropriate edge of the size-constraining container unless
     // using a 'center' position.
-    if (position.overlayX !== 'center') {
+    if (position.overlayX !== 'center' && !this._isPushed) {
       style[position.overlayX === 'end' ? 'right' : 'left'] = '0';
     }
 
-    if (position.overlayY !== 'center') {
+    if (position.overlayY !== 'center' && !this._isPushed) {
       style[position.overlayY === 'bottom' ? 'bottom' : 'top'] = '0';
     }
 
