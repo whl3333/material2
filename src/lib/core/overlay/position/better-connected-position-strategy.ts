@@ -27,6 +27,7 @@ import {isElementScrolledOutsideView, isElementClippedByScrolling} from './scrol
 //    Need to confirm w/ Matias that this *reliably* happens before animations start.
 
 // TODO: why does the width change on reposition?
+// TODO: center-center X is slightly off
 // TODO: refactor clipping detection into a separate thing (part of scrolling module)
 // TODO: attribute selector to specify the transform-origin inside the overlay content
 // TODO: unit tests
