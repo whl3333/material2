@@ -27,7 +27,7 @@ export class ConnectedOverlayDemo {
   originY: VerticalConnectionPos = 'bottom';
   overlayX: HorizontalConnectionPos = 'start';
   overlayY: VerticalConnectionPos = 'top';
-  isFlexible = false;
+  isFlexible = true;
   canPush = true;
   showBoundingBox = false;
 
@@ -50,20 +50,20 @@ export class ConnectedOverlayDemo {
           originY: this.originY,
           overlayX: this.overlayX,
           overlayY: this.overlayY,
-          weight: 2,
+          //weight: 2,
         },
-        // {
-        //   originX: 'start',
-        //   originY: 'top',
-        //   overlayX: 'start',
-        //   overlayY: 'bottom',
-        // },
-        // {
-        //   originX: 'start',
-        //   originY: 'bottom',
-        //   overlayX: 'start',
-        //   overlayY: 'top',
-        // },
+        {
+          originX: 'start',
+          originY: 'top',
+          overlayX: 'start',
+          overlayY: 'bottom',
+        },
+        {
+          originX: 'start',
+          originY: 'bottom',
+          overlayX: 'start',
+          overlayY: 'top',
+        },
         ]);
 
     // strategy.positionChange.subscribe(e => {
@@ -74,6 +74,7 @@ export class ConnectedOverlayDemo {
     config.positionStrategy = strategy;
     config.direction = this.dir.value;
     config.minHeight = 50;
+    config.minWidth = 200;
     //config.maxHeight = 250;
 
     config.scrollStrategy = this.overlay.scrollStrategies.reposition();

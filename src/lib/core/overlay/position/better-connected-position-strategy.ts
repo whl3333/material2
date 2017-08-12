@@ -26,7 +26,7 @@ import {isElementScrolledOutsideView, isElementClippedByScrolling} from './scrol
 //    This is a change to OverlayRef. Exploring defering the initial positioning until onStable.
 //    Need to confirm w/ Matias that this *reliably* happens before animations start.
 
-// TODO: test pushing
+// TODO: why does the width change on reposition?
 // TODO: refactor clipping detection into a separate thing (part of scrolling module)
 // TODO: attribute selector to specify the transform-origin inside the overlay content
 // TODO: unit tests
@@ -55,9 +55,6 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
   /** Last width used for the bounding box. Used to avoid resizing the overlay after open. */
   private _lastBoundingBoxWidth = 0;
-
-  /** Last measurements bounding box. Used to keep the same position when flexible sizing is off. */
-  private _lastBoundingBoxRect: BoundingBoxRect;
 
   /** Whether the overlay was pushed in a previous positioning. */
   private _isPushed = false;
@@ -206,6 +203,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       // If the overlay, without any further work, fits into the viewport, use this position.
       if (overlayFit.isCompletelyWithinViewport) {
         this._isPushed = false;
+        console.log('Fits completely within viewport');
         this._applyPosition(pos, originPoint);
         return;
       }
@@ -248,6 +246,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       }
 
       this._isPushed = false;
+      console.log('using flexible fit');
       this._applyPosition(bestFit!.position, bestFit!.origin);
       return;
     }
@@ -255,17 +254,17 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
     // When none of the preferred positions fit within the viewport, take the position
     // that went off-screen the least and attempt to push it on-screen.
     if (this._canPush) {
-      // TODO(jelbourn): after getting a new origin, the opening "direction" of the overlay might
+      // TODO(jelbourn): after pushing, the opening "direction" of the overlay might
       // not make sense.
-      const pushedOrigin =
-          this._pushOverlayOnScreen(fallback!.overlayPoint, overlayRect);
       this._isPushed = true;
-      this._applyPosition(fallback!.pos, pushedOrigin);
+      console.log('using push');
+      this._applyPosition(fallback!.pos, fallback!.originPoint);
       return;
     }
 
     // All options for getting the overlay within the viewport have been exhausted, so go with the
     // position that went off-screen the least.
+    console.log('using final fallback');
     this._applyPosition(fallback!.pos, fallback!.originPoint);
   }
 
@@ -508,7 +507,7 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
    * @param originPoint The point on the origin element where the overlay is connected.
    */
   private _applyPosition(position: ConnectedPosition, originPoint: Point) {
-    this._setOverlayElementStyles(position);
+    this._setOverlayElementStyles(originPoint, position);
     this._setBoundingBoxStyles(originPoint, position);
 
     // Save the last connected position in case the position needs to be re-calculated.
@@ -604,35 +603,38 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
       boundingBoxRect.width = Math.min(boundingBoxRect.width, this._lastBoundingBoxWidth);
     }
 
-    const styles = {
-      width: this._hasFlexibleWidth ? `${boundingBoxRect.width}px` : '100vw',
-      height: this._hasFlexibleHeight ? `${boundingBoxRect.height}px`: '100vh',
-      top: boundingBoxRect.top ? `${boundingBoxRect.top}px` : '',
-      bottom: boundingBoxRect.bottom ? `${boundingBoxRect.bottom}px` : '',
-      left: boundingBoxRect.left ? `${boundingBoxRect.left}px` : '',
-      right: boundingBoxRect.right ? `${boundingBoxRect.right}px` : '',
-    } as CSSStyleDeclaration;
+    const styles = {} as CSSStyleDeclaration;
+
+    if (!this._hasFlexibleHeight || this._isPushed) {
+      styles.top = '0';
+      styles.bottom = '';
+      styles.height = '100vh';
+    } else {
+      styles.height = `${boundingBoxRect.height}px`;
+      styles.top = boundingBoxRect.top ? `${boundingBoxRect.top}px` : '';
+      styles.bottom = boundingBoxRect.bottom ? `${boundingBoxRect.bottom}px` : '';
+    }
+    
+    if (!this._hasFlexibleWidth || this._isPushed) {
+      styles.left = '0';
+      styles.right = '';
+      styles.width = '100vw';
+    } else {
+      styles.width = `${boundingBoxRect.width}px`;
+      styles.left = boundingBoxRect.left ? `${boundingBoxRect.left}px` : '';
+      styles.right = boundingBoxRect.right ? `${boundingBoxRect.right}px` : '';
+    }
 
     const maxHeight = this._overlayRef.getState().maxHeight;
-    if (maxHeight) {
+    if (maxHeight && this._hasFlexibleHeight) {
       styles.maxHeight = formatCssUnit(maxHeight);
     }
 
     const maxWidth = this._overlayRef.getState().maxWidth;
-    if (maxWidth) {
+    if (maxWidth && this._hasFlexibleWidth) {
       styles.maxWidth = formatCssUnit(maxWidth);
     }
 
-    if (this._isPushed) {
-      styles.bottom = '';
-      styles.right = '';
-      styles.top = `${origin.y}px`;
-      styles.left = `${origin.x}px`;
-      styles.alignItems = 'normal';
-      styles.justifyContent = 'normal';
-    }
-
-    this._lastBoundingBoxRect = boundingBoxRect;
     this._lastBoundingBoxHeight = boundingBoxRect.height;
     this._lastBoundingBoxWidth = boundingBoxRect.width;
 
@@ -654,9 +656,9 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
   }
 
   /** Sets positioning styles to the overlay element. */
-  private _setOverlayElementStyles(position: ConnectedPosition): void {
+  private _setOverlayElementStyles(originPoint: Point, position: ConnectedPosition): void {
     // Reset styles from any previous positioning.
-    const style = {
+    const styles = {
       top: '',
       left: '',
       bottom: '',
@@ -665,37 +667,103 @@ export class BetterConnectedPositionStrategy implements PositionStrategy {
 
     // Align the overlay panel to the appropriate edge of the size-constraining container unless
     // using a 'center' position.
-    if (position.overlayX !== 'center' && !this._isPushed) {
-      style[position.overlayX === 'end' ? 'right' : 'left'] = '0';
+    if (this._hasFlexibleWidth && position.overlayX !== 'center' && !this._isPushed) {
+      // TODO: rtl?
+      styles[position.overlayX === 'end' ? 'right' : 'left'] = '0';
     }
 
-    if (position.overlayY !== 'center' && !this._isPushed) {
-      style[position.overlayY === 'bottom' ? 'bottom' : 'top'] = '0';
+    if (this._hasFlexibleHeight && position.overlayY !== 'center' && !this._isPushed) {
+      styles[position.overlayY === 'bottom' ? 'bottom' : 'top'] = '0';
+    }
+
+    if (!this._hasFlexibleHeight || this._isPushed) {
+      extendObject(styles, this._getExactOverlayY(position, originPoint));
+    }
+
+    if (!this._hasFlexibleWidth || this._isPushed) {
+      extendObject(styles, this._getExactOverlayX(position, originPoint));
     }
 
     // Use a negative margin to apply the position's offset. We do this because the `center`
     // positions rely on being in the normal flex flow and setting a `top` / `left` at all will
     // completely throw off the position.
     if (position.offsetX) {
-      style[position.offsetX < 0 ? 'margin-left' : 'margin-right'] = -Math.abs(position.offsetX);
+      styles[position.offsetX < 0 ? 'margin-left' : 'margin-right'] = -Math.abs(position.offsetX);
     }
 
     if (position.offsetY) {
-      style[position.offsetY < 0 ? 'margin-top' : 'margin-bottom'] = -Math.abs(position.offsetY);
+      styles[position.offsetY < 0 ? 'margin-top' : 'margin-bottom'] = -Math.abs(position.offsetY);
     }
 
     // If a maxWidth or maxHeight is specified on the overlay, we remove them. We do this because
     // we need these values to both be set to "100%" for the automatic flexible sizing to work.
     // The maxHeight and maxWidth are set on the boundingBox in order to enforce the constraint.
-    if (this._overlayRef.getState().maxHeight) {
-      style.maxHeight = '';
+    if (this._hasFlexibleHeight && this._overlayRef.getState().maxHeight) {
+      styles.maxHeight = '';
     }
 
-    if (this._overlayRef.getState().maxWidth) {
-      style.maxWidth = '';
+    if (this._hasFlexibleWidth && this._overlayRef.getState().maxWidth) {
+      styles.maxWidth = '';
     }
 
-    extendObject(this._pane.style, style);
+    extendObject(this._pane.style, styles);
+  }
+
+  /** Gets the exact top/bottom for the overlay when not using flexible sizing or when pushing. */
+  private _getExactOverlayY(position: ConnectedPosition, originPoint: Point) {
+    let overlayPoint = this._getOverlayPoint(originPoint, this._overlayRect, position);
+    if (this._isPushed) {
+      overlayPoint = this._pushOverlayOnScreen(overlayPoint, this._overlayRect);
+    }
+
+    // We want to set either `top` or `bottom` based on whether the overlay wants to appear above
+    // or below the origin and the direction in which the element will expand.
+    let verticalStyleProperty = position.overlayY === 'bottom' ? 'bottom' : 'top';
+
+    // When using `bottom`, we adjust the y position such that it is the distance
+    // from the bottom of the viewport rather than the top.
+    let y = verticalStyleProperty === 'top' ?
+        overlayPoint.y :
+        document.documentElement.clientHeight - (overlayPoint.y + this._overlayRect.height);
+
+    // Reset any existing styles. This is necessary in case the preferred position has
+    // changed since the last `apply`.
+    const result = {};
+    ['top', 'bottom'].forEach(p => result[p] = null);
+    result[verticalStyleProperty] = `${y}px`;
+    return result;
+  }
+
+  /** Gets the exact left/right for the overlay when not using flexible sizing or when pushing. */
+  private _getExactOverlayX(position: ConnectedPosition, originPoint: Point) {
+    let overlayPoint = this._getOverlayPoint(originPoint, this._overlayRect, position);
+    if (this._isPushed) {
+      overlayPoint = this._pushOverlayOnScreen(overlayPoint, this._overlayRect);
+    }
+
+    // We want to set either `left` or `right` based on whether the overlay wants to appear "before"
+    // or "after" the origin, which determines the direction in which the element will expand.
+    // For the horizontal axis, the meaning of "before" and "after" change based on whether the
+    // page is in RTL or LTR.
+    let horizontalStyleProperty: string;
+    if (this._isRtl()) {
+      horizontalStyleProperty = position.overlayX === 'end' ? 'left' : 'right';
+    } else {
+      horizontalStyleProperty = position.overlayX === 'end' ? 'right' : 'left';
+    }
+
+    // When we're setting `right`, we adjust the x position such that it is the distance
+    // from the right edge of the viewport rather than the left edge.
+    let x = horizontalStyleProperty === 'left' ?
+      overlayPoint.x :
+      document.documentElement.clientWidth - (overlayPoint.x + this._overlayRect.width);
+
+    // Reset any existing styles. This is necessary in case the preferred position has
+    // changed since the last `apply`.
+    const result = {};
+    ['left', 'right'].forEach(p => result[p] = null);
+    result[horizontalStyleProperty] = `${x}px`;
+    return result;
   }
 
   /**
