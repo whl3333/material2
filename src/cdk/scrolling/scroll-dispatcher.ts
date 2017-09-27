@@ -123,7 +123,12 @@ export class ScrollDispatcher {
     return scrollingContainers;
   }
 
-  /** Returns true if the element is contained within the provided Scrollable. */
+  /**
+   * Whether the given element is a descendant of the given Scrollable.
+   * @param scrollable The scrollable container.
+   * @param elementRef The element
+   * @returns Whether the
+   */
   scrollableContainsElement(scrollable: Scrollable, elementRef: ElementRef): boolean {
     let element = elementRef.nativeElement;
     let scrollableElement = scrollable.getElementRef().nativeElement;
