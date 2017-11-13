@@ -9,7 +9,6 @@
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {FocusMonitor} from '@angular/cdk/a11y';
 import {ENTER, SPACE} from '@angular/cdk/keycodes';
-import {filter} from 'rxjs/operators/filter';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -22,6 +21,7 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import {merge} from 'rxjs/observable/merge';
+import {filter} from 'rxjs/operators/filter';
 import {Subscription} from 'rxjs/Subscription';
 import {EXPANSION_PANEL_ANIMATION_TIMING, MatExpansionPanel} from './expansion-panel';
 

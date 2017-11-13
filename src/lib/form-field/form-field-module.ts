@@ -6,9 +6,9 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+import {PlatformModule} from '@angular/cdk/platform';
 import {CommonModule} from '@angular/common';
 import {NgModule} from '@angular/core';
-import {PlatformModule} from '@angular/cdk/platform';
 import {MatError} from './error';
 import {MatFormField} from './form-field';
 import {MatHint} from './hint';

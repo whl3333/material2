@@ -6,18 +6,18 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {catchError} from 'rxjs/operators/catchError';
-import {tap} from 'rxjs/operators/tap';
-import {finalize} from 'rxjs/operators/finalize';
-import {map} from 'rxjs/operators/map';
-import {share} from 'rxjs/operators/share';
-import {Injectable, Optional, SecurityContext, SkipSelf} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
+import {Injectable, Optional, SecurityContext, SkipSelf} from '@angular/core';
 import {DomSanitizer, SafeResourceUrl} from '@angular/platform-browser';
 import {Observable} from 'rxjs/Observable';
 import {forkJoin} from 'rxjs/observable/forkJoin';
 import {of as observableOf} from 'rxjs/observable/of';
 import {_throw as observableThrow} from 'rxjs/observable/throw';
+import {catchError} from 'rxjs/operators/catchError';
+import {finalize} from 'rxjs/operators/finalize';
+import {map} from 'rxjs/operators/map';
+import {share} from 'rxjs/operators/share';
+import {tap} from 'rxjs/operators/tap';
 
 
 /**

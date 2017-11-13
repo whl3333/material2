@@ -7,16 +7,16 @@
  */
 
 import {
+  AfterContentInit,
+  ChangeDetectionStrategy,
   Component,
-  ViewEncapsulation,
-  Renderer2,
+  ContentChildren,
+  Directive,
   ElementRef,
   Input,
-  ContentChildren,
   QueryList,
-  AfterContentInit,
-  Directive,
-  ChangeDetectionStrategy,
+  Renderer2,
+  ViewEncapsulation,
 } from '@angular/core';
 import {MatLine, MatLineSetter} from '@angular/material/core';
 import {coerceToNumber} from './grid-list-measure';

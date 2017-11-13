@@ -6,8 +6,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
   name = "build_bazel_rules_nodejs",
   remote = "https://github.com/bazelbuild/rules_nodejs.git",
-  # TODO(jelbourn): use the correct tag here.
-  commit = "31d36ff2acdf630d1e331f38006cf1a5d303d338",
+  tag = "0.2.2",
 )
 
 # NOTE: this rule installs nodejs, npm, and yarn, but does NOT install

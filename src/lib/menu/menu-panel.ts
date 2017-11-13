@@ -6,9 +6,9 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+import {Direction} from '@angular/cdk/bidi';
 import {EventEmitter, TemplateRef} from '@angular/core';
 import {MenuPositionX, MenuPositionY} from './menu-positions';
-import {Direction} from '@angular/cdk/bidi';
 
 export interface MatMenuPanel {
   xPosition: MenuPositionX;

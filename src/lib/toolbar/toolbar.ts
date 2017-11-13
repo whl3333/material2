@@ -6,6 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+import {Platform} from '@angular/cdk/platform';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -16,10 +17,9 @@ import {
   isDevMode,
   QueryList,
   Renderer2,
-  ViewEncapsulation
+  ViewEncapsulation,
 } from '@angular/core';
 import {CanColor, mixinColor} from '@angular/material/core';
-import {Platform} from '@angular/cdk/platform';
 
 // Boilerplate for applying mixins to MatToolbar.
 /** @docs-private */

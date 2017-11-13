@@ -12,7 +12,7 @@ import {
   EventEmitter,
   Input,
   Output,
-  ViewEncapsulation
+  ViewEncapsulation,
 } from '@angular/core';
 
 

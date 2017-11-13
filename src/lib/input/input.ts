@@ -18,7 +18,7 @@ import {
   OnDestroy,
   Optional,
   Renderer2,
-  Self
+  Self,
 } from '@angular/core';
 import {FormControl, FormGroupDirective, NgControl, NgForm} from '@angular/forms';
 import {ErrorStateMatcher} from '@angular/material/core';

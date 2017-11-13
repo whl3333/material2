@@ -6,33 +6,26 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+import {animate, AnimationEvent, state, style, transition, trigger,} from '@angular/animations';
+import {Direction, Directionality} from '@angular/cdk/bidi';
+import {CdkPortalOutlet, TemplatePortal} from '@angular/cdk/portal';
 import {
+  ChangeDetectionStrategy,
   Component,
-  Input,
-  Inject,
-  Output,
+  ComponentFactoryResolver,
+  Directive,
+  ElementRef,
   EventEmitter,
+  forwardRef,
+  Inject,
+  Input,
   OnDestroy,
   OnInit,
-  ElementRef,
-  Directive,
   Optional,
-  ViewEncapsulation,
-  ChangeDetectionStrategy,
-  ComponentFactoryResolver,
+  Output,
   ViewContainerRef,
-  forwardRef,
+  ViewEncapsulation,
 } from '@angular/core';
-import {
-  trigger,
-  state,
-  style,
-  animate,
-  transition,
-  AnimationEvent,
-} from '@angular/animations';
-import {TemplatePortal, CdkPortalOutlet} from '@angular/cdk/portal';
-import {Directionality, Direction} from '@angular/cdk/bidi';
 import {Subscription} from 'rxjs/Subscription';
 
 /** Workaround for https://github.com/angular/angular/issues/17849 */

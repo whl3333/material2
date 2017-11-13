@@ -6,30 +6,23 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+import {animate, keyframes, state, style, transition, trigger,} from '@angular/animations';
+import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import {CdkColumnDef} from '@angular/cdk/table';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   Input,
   Optional,
-  ViewEncapsulation
+  ViewEncapsulation,
 } from '@angular/core';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
-import {
-  trigger,
-  state,
-  style,
-  animate,
-  transition,
-  keyframes,
-} from '@angular/animations';
-import {CdkColumnDef} from '@angular/cdk/table';
-import {Subscription} from 'rxjs/Subscription';
-import {merge} from 'rxjs/observable/merge';
-import {MatSort, MatSortable} from './sort';
-import {MatSortHeaderIntl} from './sort-header-intl';
-import {getSortHeaderNotContainedWithinSortError} from './sort-errors';
 import {AnimationCurves, AnimationDurations} from '@angular/material/core';
+import {merge} from 'rxjs/observable/merge';
+import {Subscription} from 'rxjs/Subscription';
+import {MatSort, MatSortable} from './sort';
+import {getSortHeaderNotContainedWithinSortError} from './sort-errors';
+import {MatSortHeaderIntl} from './sort-header-intl';
 
 const SORT_ANIMATION_TRANSITION =
     AnimationDurations.ENTERING + ' ' + AnimationCurves.STANDARD_CURVE;

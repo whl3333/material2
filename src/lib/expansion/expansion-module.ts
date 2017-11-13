@@ -6,16 +6,16 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+import {A11yModule} from '@angular/cdk/a11y';
+import {CdkAccordionModule} from '@angular/cdk/accordion';
+import {UNIQUE_SELECTION_DISPATCHER_PROVIDER} from '@angular/cdk/collections';
 import {CommonModule} from '@angular/common';
 import {NgModule} from '@angular/core';
-import {UNIQUE_SELECTION_DISPATCHER_PROVIDER} from '@angular/cdk/collections';
-import {CdkAccordionModule} from '@angular/cdk/accordion';
-import {A11yModule} from '@angular/cdk/a11y';
 import {MatAccordion} from './accordion';
 import {
   MatExpansionPanel,
   MatExpansionPanelActionRow,
-  MatExpansionPanelBase
+  MatExpansionPanelBase,
 } from './expansion-panel';
 import {
   MatExpansionPanelDescription,

@@ -6,14 +6,13 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {NgModule} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {MatCommonModule} from '@angular/material/core';
 import {OverlayModule} from '@angular/cdk/overlay';
-import {MatMenu, MAT_MENU_DEFAULT_OPTIONS} from './menu-directive';
+import {CommonModule} from '@angular/common';
+import {NgModule} from '@angular/core';
+import {MatCommonModule, MatRippleModule} from '@angular/material/core';
+import {MAT_MENU_DEFAULT_OPTIONS, MatMenu} from './menu-directive';
 import {MatMenuItem} from './menu-item';
-import {MatMenuTrigger, MAT_MENU_SCROLL_STRATEGY_PROVIDER} from './menu-trigger';
-import {MatRippleModule} from '@angular/material/core';
+import {MAT_MENU_SCROLL_STRATEGY_PROVIDER, MatMenuTrigger} from './menu-trigger';
 
 
 @NgModule({

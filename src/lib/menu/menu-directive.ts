@@ -9,10 +9,8 @@
 import {AnimationEvent} from '@angular/animations';
 import {FocusKeyManager} from '@angular/cdk/a11y';
 import {Direction} from '@angular/cdk/bidi';
+import {coerceBooleanProperty} from '@angular/cdk/coercion';
 import {ESCAPE, LEFT_ARROW, RIGHT_ARROW} from '@angular/cdk/keycodes';
-import {startWith} from 'rxjs/operators/startWith';
-import {switchMap} from 'rxjs/operators/switchMap';
-import {first} from 'rxjs/operators/first';
 import {
   AfterContentInit,
   ChangeDetectionStrategy,
@@ -23,23 +21,25 @@ import {
   Inject,
   InjectionToken,
   Input,
+  NgZone,
   OnDestroy,
   Output,
   QueryList,
   TemplateRef,
   ViewChild,
   ViewEncapsulation,
-  NgZone,
 } from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {merge} from 'rxjs/observable/merge';
+import {first} from 'rxjs/operators/first';
+import {startWith} from 'rxjs/operators/startWith';
+import {switchMap} from 'rxjs/operators/switchMap';
 import {Subscription} from 'rxjs/Subscription';
 import {fadeInItems, transformMenu} from './menu-animations';
 import {throwMatMenuInvalidPositionX, throwMatMenuInvalidPositionY} from './menu-errors';
 import {MatMenuItem} from './menu-item';
 import {MatMenuPanel} from './menu-panel';
 import {MenuPositionX, MenuPositionY} from './menu-positions';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
 
 /** Default `mat-menu` options that can be overridden. */

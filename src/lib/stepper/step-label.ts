@@ -6,8 +6,8 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {Directive, TemplateRef} from '@angular/core';
 import {CdkStepLabel} from '@angular/cdk/stepper';
+import {Directive, TemplateRef} from '@angular/core';
 
 /** Workaround for https://github.com/angular/angular/issues/17849 */
 export const _MatStepLabel = CdkStepLabel;

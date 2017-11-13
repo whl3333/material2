@@ -7,12 +7,15 @@
  */
 
 import {NgModule} from '@angular/core';
-import {MatLineModule, MatCommonModule} from '@angular/material/core';
-import {
-  MatGridTile, MatGridTileText, MatGridTileFooterCssMatStyler,
-  MatGridTileHeaderCssMatStyler, MatGridAvatarCssMatStyler
-} from './grid-tile';
+import {MatCommonModule, MatLineModule} from '@angular/material/core';
 import {MatGridList} from './grid-list';
+import {
+  MatGridAvatarCssMatStyler,
+  MatGridTile,
+  MatGridTileFooterCssMatStyler,
+  MatGridTileHeaderCssMatStyler,
+  MatGridTileText,
+} from './grid-tile';
 
 
 @NgModule({

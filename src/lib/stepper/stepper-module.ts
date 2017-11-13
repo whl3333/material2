@@ -12,7 +12,7 @@ import {CdkStepperModule} from '@angular/cdk/stepper';
 import {CommonModule} from '@angular/common';
 import {NgModule} from '@angular/core';
 import {MatButtonModule} from '@angular/material/button';
-import {MatCommonModule, MatRippleModule, ErrorStateMatcher} from '@angular/material/core';
+import {ErrorStateMatcher, MatCommonModule, MatRippleModule} from '@angular/material/core';
 import {MatIconModule} from '@angular/material/icon';
 import {MatStepHeader} from './step-header';
 import {MatStepLabel} from './step-label';
@@ -23,14 +23,14 @@ import {MatStepperIntl} from './stepper-intl';
 
 @NgModule({
   imports: [
-    MatCommonModule,
-    CommonModule,
-    PortalModule,
-    MatButtonModule,
-    CdkStepperModule,
-    MatIconModule,
     A11yModule,
+    CdkStepperModule,
+    CommonModule,
+    MatButtonModule,
+    MatCommonModule,
+    MatIconModule,
     MatRippleModule,
+    PortalModule,
   ],
   exports: [
     MatCommonModule,

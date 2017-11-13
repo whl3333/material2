@@ -6,23 +6,23 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+import {ActiveDescendantKeyManager} from '@angular/cdk/a11y';
 import {
   AfterContentInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ContentChildren,
   ElementRef,
+  EventEmitter,
   Input,
+  Output,
   QueryList,
   TemplateRef,
   ViewChild,
   ViewEncapsulation,
-  ChangeDetectorRef,
-  ChangeDetectionStrategy,
-  EventEmitter,
-  Output,
 } from '@angular/core';
-import {MatOption, MatOptgroup} from '@angular/material/core';
-import {ActiveDescendantKeyManager} from '@angular/cdk/a11y';
+import {MatOptgroup, MatOption} from '@angular/material/core';
 
 
 /**

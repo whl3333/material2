@@ -7,9 +7,9 @@
  */
 
 import {NgModule} from '@angular/core';
-import {MatChipList} from './chip-list';
 import {MatBasicChip, MatChip, MatChipRemove} from './chip';
 import {MatChipInput} from './chip-input';
+import {MatChipList} from './chip-list';
 
 
 @NgModule({

@@ -6,22 +6,17 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import {Directionality} from '@angular/cdk/bidi';
-import {DOWN_ARROW, ENTER, ESCAPE, UP_ARROW, TAB} from '@angular/cdk/keycodes';
+import {DOWN_ARROW, ENTER, ESCAPE, TAB, UP_ARROW} from '@angular/cdk/keycodes';
 import {
   ConnectedPositionStrategy,
   Overlay,
-  OverlayRef,
   OverlayConfig,
+  OverlayRef,
   PositionStrategy,
   RepositionScrollStrategy,
   ScrollStrategy,
 } from '@angular/cdk/overlay';
 import {TemplatePortal} from '@angular/cdk/portal';
-import {filter} from 'rxjs/operators/filter';
-import {first} from 'rxjs/operators/first';
-import {switchMap} from 'rxjs/operators/switchMap';
-import {tap} from 'rxjs/operators/tap';
-import {delay} from 'rxjs/operators/delay';
 import {
   ChangeDetectorRef,
   Directive,
@@ -41,10 +36,15 @@ import {MatOption, MatOptionSelectionChange} from '@angular/material/core';
 import {MatFormField} from '@angular/material/form-field';
 import {DOCUMENT} from '@angular/platform-browser';
 import {Observable} from 'rxjs/Observable';
-import {Subject} from 'rxjs/Subject';
 import {fromEvent} from 'rxjs/observable/fromEvent';
 import {merge} from 'rxjs/observable/merge';
 import {of as observableOf} from 'rxjs/observable/of';
+import {delay} from 'rxjs/operators/delay';
+import {filter} from 'rxjs/operators/filter';
+import {first} from 'rxjs/operators/first';
+import {switchMap} from 'rxjs/operators/switchMap';
+import {tap} from 'rxjs/operators/tap';
+import {Subject} from 'rxjs/Subject';
 import {Subscription} from 'rxjs/Subscription';
 import {MatAutocomplete} from './autocomplete';
 
@@ -141,7 +141,8 @@ export class MatAutocompleteTrigger implements ControlValueAccessor, OnDestroy {
   /* The autocomplete panel to be attached to this trigger. */
   @Input('matAutocomplete') autocomplete: MatAutocomplete;
 
-  constructor(private _element: ElementRef, private _overlay: Overlay,
+  constructor(private _element: ElementRef,
+              private _overlay: Overlay,
               private _viewContainerRef: ViewContainerRef,
               private _zone: NgZone,
               private _changeDetectorRef: ChangeDetectorRef,

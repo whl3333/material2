@@ -7,6 +7,9 @@
  */
 
 import {animate, state, style, transition, trigger} from '@angular/animations';
+import {CdkAccordionItem} from '@angular/cdk/accordion';
+import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import {UniqueSelectionDispatcher} from '@angular/cdk/collections';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -21,12 +24,9 @@ import {
   SimpleChanges,
   ViewEncapsulation,
 } from '@angular/core';
-import {CdkAccordionItem} from '@angular/cdk/accordion';
-import {UniqueSelectionDispatcher} from '@angular/cdk/collections';
 import {CanDisable, mixinDisabled} from '@angular/material/core';
 import {Subject} from 'rxjs/Subject';
 import {MatAccordion} from './accordion';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
 /** Workaround for https://github.com/angular/angular/issues/17849 */
 export const _CdkAccordionItem = CdkAccordionItem;

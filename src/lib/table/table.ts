@@ -6,8 +6,8 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {ChangeDetectionStrategy, Component, ViewEncapsulation} from '@angular/core';
 import {CDK_TABLE_TEMPLATE, CdkTable} from '@angular/cdk/table';
+import {ChangeDetectionStrategy, Component, ViewEncapsulation} from '@angular/core';
 
 /** Workaround for https://github.com/angular/angular/issues/17849 */
 export const _MatTable = CdkTable;

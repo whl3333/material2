@@ -6,8 +6,8 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {ViewContainerRef} from '@angular/core';
 import {Direction} from '@angular/cdk/bidi';
+import {ViewContainerRef} from '@angular/core';
 
 /** Valid ARIA roles for a dialog element. */
 export type DialogRole = 'dialog' | 'alertdialog';

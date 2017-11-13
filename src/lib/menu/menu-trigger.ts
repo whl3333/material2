@@ -13,14 +13,13 @@ import {
   ConnectedPositionStrategy,
   HorizontalConnectionPos,
   Overlay,
-  OverlayRef,
   OverlayConfig,
+  OverlayRef,
   RepositionScrollStrategy,
   ScrollStrategy,
   VerticalConnectionPos,
 } from '@angular/cdk/overlay';
 import {TemplatePortal} from '@angular/cdk/portal';
-import {filter} from 'rxjs/operators/filter';
 import {
   AfterContentInit,
   Directive,
@@ -37,6 +36,7 @@ import {
 } from '@angular/core';
 import {merge} from 'rxjs/observable/merge';
 import {of as observableOf} from 'rxjs/observable/of';
+import {filter} from 'rxjs/operators/filter';
 import {Subscription} from 'rxjs/Subscription';
 import {MatMenu} from './menu-directive';
 import {throwMatMenuMissingError} from './menu-errors';

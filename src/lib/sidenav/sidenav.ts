@@ -6,15 +6,20 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {
-  ChangeDetectionStrategy, ChangeDetectorRef,
-  Component, ContentChild,
-  ContentChildren, forwardRef, Inject, Input,
-  ViewEncapsulation
-} from '@angular/core';
-import {MatDrawer, MatDrawerContainer, MatDrawerContent} from './drawer';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {coerceBooleanProperty, coerceNumberProperty} from '@angular/cdk/coercion';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ContentChild,
+  ContentChildren,
+  forwardRef,
+  Inject,
+  Input,
+  ViewEncapsulation,
+} from '@angular/core';
+import {MatDrawer, MatDrawerContainer, MatDrawerContent} from './drawer';
 
 
 @Component({

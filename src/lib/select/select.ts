@@ -18,11 +18,6 @@ import {
   ScrollStrategy,
   ViewportRuler,
 } from '@angular/cdk/overlay';
-import {filter} from 'rxjs/operators/filter';
-import {first} from 'rxjs/operators/first';
-import {map} from 'rxjs/operators/map';
-import {startWith} from 'rxjs/operators/startWith';
-import {takeUntil} from 'rxjs/operators/takeUntil';
 import {
   AfterContentInit,
   Attribute,
@@ -57,22 +52,27 @@ import {
   FormControl,
   FormGroupDirective,
   NgControl,
-  NgForm
+  NgForm,
 } from '@angular/forms';
 import {
   CanDisable,
   ErrorStateMatcher,
   HasTabIndex,
+  MAT_OPTION_PARENT_COMPONENT,
   MatOptgroup,
   MatOption,
   MatOptionSelectionChange,
   mixinDisabled,
   mixinTabIndex,
-  MAT_OPTION_PARENT_COMPONENT,
 } from '@angular/material/core';
 import {MatFormField, MatFormFieldControl} from '@angular/material/form-field';
 import {Observable} from 'rxjs/Observable';
 import {merge} from 'rxjs/observable/merge';
+import {filter} from 'rxjs/operators/filter';
+import {first} from 'rxjs/operators/first';
+import {map} from 'rxjs/operators/map';
+import {startWith} from 'rxjs/operators/startWith';
+import {takeUntil} from 'rxjs/operators/takeUntil';
 import {Subject} from 'rxjs/Subject';
 import {fadeInContent, transformPanel} from './select-animations';
 import {

@@ -8,8 +8,6 @@
 
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
-import {first} from 'rxjs/operators/first';
-import {startWith} from 'rxjs/operators/startWith';
 import {
   AfterContentChecked,
   AfterContentInit,
@@ -23,7 +21,8 @@ import {
   Inject,
   Input,
   Optional,
-  QueryList, Renderer2,
+  QueryList,
+  Renderer2,
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
@@ -33,6 +32,8 @@ import {
   PlaceholderOptions,
 } from '@angular/material/core';
 import {fromEvent} from 'rxjs/observable/fromEvent';
+import {first} from 'rxjs/operators/first';
+import {startWith} from 'rxjs/operators/startWith';
 import {MatError} from './error';
 import {MatFormFieldControl} from './form-field-control';
 import {

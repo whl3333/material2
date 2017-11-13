@@ -6,35 +6,24 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+import {animate, AnimationEvent, state, style, transition, trigger,} from '@angular/animations';
+import {BasePortalOutlet, CdkPortalOutlet, ComponentPortal,} from '@angular/cdk/portal';
 import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ComponentRef,
+  ElementRef,
   EmbeddedViewRef,
-  ViewChild,
   NgZone,
   OnDestroy,
   Renderer2,
-  ElementRef,
-  ChangeDetectionStrategy,
+  ViewChild,
   ViewEncapsulation,
-  ChangeDetectorRef,
 } from '@angular/core';
-import {
-  trigger,
-  state,
-  style,
-  transition,
-  animate,
-  AnimationEvent,
-} from '@angular/animations';
-import {
-  BasePortalOutlet,
-  ComponentPortal,
-  CdkPortalOutlet,
-} from '@angular/cdk/portal';
-import {first} from 'rxjs/operators/first';
 import {AnimationCurves, AnimationDurations} from '@angular/material/core';
 import {Observable} from 'rxjs/Observable';
+import {first} from 'rxjs/operators/first';
 import {Subject} from 'rxjs/Subject';
 import {MatSnackBarConfig} from './snack-bar-config';
 

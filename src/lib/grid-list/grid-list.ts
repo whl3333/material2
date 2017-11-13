@@ -6,27 +6,24 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {
-  Component,
-  ViewEncapsulation,
-  AfterContentChecked,
-  OnInit,
-  Input,
-  ContentChildren,
-  QueryList,
-  Renderer2,
-  ElementRef,
-  Optional,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import {MatGridTile} from './grid-tile';
-import {TileCoordinator} from './tile-coordinator';
-import {TileStyler, FitTileStyler, RatioTileStyler, FixedTileStyler} from './tile-styler';
 import {Directionality} from '@angular/cdk/bidi';
 import {
-  coerceToString,
-  coerceToNumber,
-} from './grid-list-measure';
+  AfterContentChecked,
+  ChangeDetectionStrategy,
+  Component,
+  ContentChildren,
+  ElementRef,
+  Input,
+  OnInit,
+  Optional,
+  QueryList,
+  Renderer2,
+  ViewEncapsulation,
+} from '@angular/core';
+import {coerceToNumber, coerceToString,} from './grid-list-measure';
+import {MatGridTile} from './grid-tile';
+import {TileCoordinator} from './tile-coordinator';
+import {FitTileStyler, FixedTileStyler, RatioTileStyler, TileStyler} from './tile-styler';
 
 
 // TODO(kara): Conditional (responsive) column count / row size.

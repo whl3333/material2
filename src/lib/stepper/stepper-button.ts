@@ -6,8 +6,8 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {Directive} from '@angular/core';
 import {CdkStepper, CdkStepperNext, CdkStepperPrevious} from '@angular/cdk/stepper';
+import {Directive} from '@angular/core';
 import {MatStepper} from './stepper';
 
 /** Workaround for https://github.com/angular/angular/issues/17849 */

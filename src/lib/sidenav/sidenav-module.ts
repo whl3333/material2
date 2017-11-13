@@ -8,10 +8,10 @@
 
 import {A11yModule} from '@angular/cdk/a11y';
 import {OverlayModule} from '@angular/cdk/overlay';
+import {ScrollDispatchModule} from '@angular/cdk/scrolling';
 import {CommonModule} from '@angular/common';
 import {NgModule} from '@angular/core';
 import {MatCommonModule} from '@angular/material/core';
-import {ScrollDispatchModule} from '@angular/cdk/scrolling';
 import {MatDrawer, MatDrawerContainer, MatDrawerContent} from './drawer';
 import {MatSidenav, MatSidenavContainer, MatSidenavContent} from './sidenav';
 

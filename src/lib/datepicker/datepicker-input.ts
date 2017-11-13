@@ -19,7 +19,7 @@ import {
   OnDestroy,
   Optional,
   Output,
-  Renderer2
+  Renderer2,
 } from '@angular/core';
 import {
   AbstractControl,
@@ -29,7 +29,7 @@ import {
   ValidationErrors,
   Validator,
   ValidatorFn,
-  Validators
+  Validators,
 } from '@angular/forms';
 import {DateAdapter, MAT_DATE_FORMATS, MatDateFormats} from '@angular/material/core';
 import {MatFormField} from '@angular/material/form-field';

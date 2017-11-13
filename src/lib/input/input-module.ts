@@ -9,10 +9,10 @@
 import {PlatformModule} from '@angular/cdk/platform';
 import {CommonModule} from '@angular/common';
 import {NgModule} from '@angular/core';
+import {ErrorStateMatcher} from '@angular/material/core';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatTextareaAutosize} from './autosize';
 import {MatInput} from './input';
-import {ErrorStateMatcher} from '@angular/material/core';
 
 
 @NgModule({

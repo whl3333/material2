@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import {animate, AnimationEvent, state, style, transition, trigger} from '@angular/animations';
-import {FocusTrap, FocusTrapFactory, FocusMonitor, FocusOrigin} from '@angular/cdk/a11y';
+import {FocusMonitor, FocusOrigin, FocusTrap, FocusTrapFactory} from '@angular/cdk/a11y';
 import {Directionality} from '@angular/cdk/bidi';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
 import {ESCAPE} from '@angular/cdk/keycodes';
@@ -31,14 +31,14 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import {DOCUMENT} from '@angular/platform-browser';
+import {Observable} from 'rxjs/Observable';
 import {merge} from 'rxjs/observable/merge';
 import {filter} from 'rxjs/operators/filter';
 import {first} from 'rxjs/operators/first';
+import {map} from 'rxjs/operators/map';
 import {startWith} from 'rxjs/operators/startWith';
 import {takeUntil} from 'rxjs/operators/takeUntil';
-import {map} from 'rxjs/operators/map';
 import {Subject} from 'rxjs/Subject';
-import {Observable} from 'rxjs/Observable';
 
 
 /** Throws an exception when two MatDrawer are matching the same position. */

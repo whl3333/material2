@@ -6,13 +6,13 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {Directive, EventEmitter, Input, isDevMode, Output} from '@angular/core';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import {Directive, EventEmitter, Input, isDevMode, Output} from '@angular/core';
 import {SortDirection} from './sort-direction';
 import {
-  getSortInvalidDirectionError,
   getSortDuplicateSortableIdError,
-  getSortHeaderMissingIdError
+  getSortHeaderMissingIdError,
+  getSortInvalidDirectionError,
 } from './sort-errors';
 
 export interface MatSortable {

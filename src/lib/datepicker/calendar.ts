@@ -27,13 +27,13 @@ import {
   Inject,
   Input,
   NgZone,
+  OnChanges,
   OnDestroy,
   Optional,
   Output,
-  ViewEncapsulation,
-  ViewChild,
-  OnChanges,
   SimpleChanges,
+  ViewChild,
+  ViewEncapsulation,
 } from '@angular/core';
 import {DateAdapter, MAT_DATE_FORMATS, MatDateFormats} from '@angular/material/core';
 import {first} from 'rxjs/operators/first';

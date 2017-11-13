@@ -7,17 +7,17 @@
  */
 
 import {LiveAnnouncer} from '@angular/cdk/a11y';
+import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
 import {Overlay, OverlayConfig, OverlayRef} from '@angular/cdk/overlay';
 import {ComponentPortal, ComponentType, PortalInjector} from '@angular/cdk/portal';
 import {ComponentRef, Injectable, Injector, Optional, SkipSelf} from '@angular/core';
 import {extendObject} from '@angular/material/core';
+import {first} from 'rxjs/operators/first';
+import {takeUntil} from 'rxjs/operators/takeUntil';
 import {SimpleSnackBar} from './simple-snack-bar';
 import {MAT_SNACK_BAR_DATA, MatSnackBarConfig} from './snack-bar-config';
 import {MatSnackBarContainer} from './snack-bar-container';
 import {MatSnackBarRef} from './snack-bar-ref';
-import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
-import {takeUntil} from 'rxjs/operators/takeUntil';
-import {first} from 'rxjs/operators/first';
 
 
 /**

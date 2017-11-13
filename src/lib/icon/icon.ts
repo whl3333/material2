@@ -6,7 +6,6 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {first} from 'rxjs/operators/first';
 import {
   Attribute,
   ChangeDetectionStrategy,
@@ -20,6 +19,7 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import {CanColor, mixinColor} from '@angular/material/core';
+import {first} from 'rxjs/operators/first';
 import {MatIconRegistry} from './icon-registry';
 
 

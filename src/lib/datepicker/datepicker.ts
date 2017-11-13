@@ -18,7 +18,6 @@ import {
   ScrollStrategy,
 } from '@angular/cdk/overlay';
 import {ComponentPortal} from '@angular/cdk/portal';
-import {first} from 'rxjs/operators/first';
 import {
   AfterContentInit,
   ChangeDetectionStrategy,
@@ -39,6 +38,7 @@ import {
 import {DateAdapter} from '@angular/material/core';
 import {MatDialog, MatDialogRef} from '@angular/material/dialog';
 import {DOCUMENT} from '@angular/platform-browser';
+import {first} from 'rxjs/operators/first';
 import {Subject} from 'rxjs/Subject';
 import {Subscription} from 'rxjs/Subscription';
 import {MatCalendar} from './calendar';
