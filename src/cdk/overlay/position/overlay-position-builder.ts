@@ -6,16 +6,16 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {ElementRef, Injectable, Inject} from '@angular/core';
 import {ViewportRuler} from '@angular/cdk/scrolling';
+import {DOCUMENT} from '@angular/common';
+import {APP_ROOT_SCOPE, ElementRef, Inject, Injectable} from '@angular/core';
+import {OriginConnectionPosition, OverlayConnectionPosition} from './connected-position';
 import {ConnectedPositionStrategy} from './connected-position-strategy';
 import {GlobalPositionStrategy} from './global-position-strategy';
-import {OverlayConnectionPosition, OriginConnectionPosition} from './connected-position';
-import {DOCUMENT} from '@angular/common';
 
 
 /** Builder for overlay position strategy. */
-@Injectable()
+@Injectable({scope: APP_ROOT_SCOPE})
 export class OverlayPositionBuilder {
   constructor(private _viewportRuler: ViewportRuler,
               @Inject(DOCUMENT) private _document: any) { }
