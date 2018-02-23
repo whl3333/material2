@@ -11,7 +11,7 @@ ng_module(
     "//src/cdk/coercion",
     "//src/cdk/collections",
   ],
-  tsconfig = ":tsconfig-build.json",
+  tsconfig = "//src/cdk:tsconfig-build.json",
 )
 
 ts_library(

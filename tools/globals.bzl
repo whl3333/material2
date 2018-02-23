@@ -1,4 +1,20 @@
-CDK_ENTRY_POINTS = ["a11y"]
+CDK_ENTRY_POINTS = [
+  "coercion",
+  "keycodes",
+  "scrolling",
+  "accordion",
+  "observers",
+  "a11y",
+  "overlay",
+  "platform",
+  "bidi",
+  "table",
+  "tree",
+  "portal",
+  "layout",
+  "stepper",
+  "collections",
+]
 
 ROLLUP_GLOBALS = dict({
   'tslib': 'tslib',

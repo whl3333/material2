@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-export {Directionality, DIR_DOCUMENT, Direction} from './directionality';
-export {Dir} from './dir';
+export * from './directionality';
+export * from './dir';
 export * from './bidi-module';
 

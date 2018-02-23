@@ -7,4 +7,5 @@ ng_module(
   module_name = "@angular/cdk/testing",
   tsconfig = ":tsconfig-test.json",
   deps = ["@rxjs"],
+  testonly = True,
 )

@@ -22,6 +22,7 @@ load("@angular//:index.bzl", "ng_module", "ng_package")
 
 ng_package(
     name = "npm_package",
+    srcs = ["package.json"],
     deps = [":cdk"] + ["//src/cdk/%s" % e for e in CDK_ENTRY_POINTS],
     entry_point = "src/cdk/index.js",
     secondary_entry_points = CDK_ENTRY_POINTS,
